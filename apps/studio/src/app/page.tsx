@@ -1,486 +1,276 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import {
-  PlayIcon,
-  EyeIcon,
-  CurrencyDollarIcon,
-  ChartBarIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
-  ClockIcon,
-  SparklesIcon,
-  RocketLaunchIcon,
-  LightBulbIcon,
-  GlobeAltIcon,
-  UserGroupIcon,
-  HeartIcon,
-  ChatBubbleLeftRightIcon,
-  ArrowUpRightIcon,
-  VideoCameraIcon,
-} from "@heroicons/react/24/outline";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function StudioDashboard() {
-  const [greeting, setGreeting] = useState("");
-  const [currentTime, setCurrentTime] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+  const [hoveredVideo, setHoveredVideo] = useState<number | null>(null);
 
+  // Simulated real-time data
+  const [liveViewers, setLiveViewers] = useState(1847);
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good morning");
-    else if (hour < 17) setGreeting("Good afternoon");
-    else setGreeting("Good evening");
-
-    setCurrentTime(
-      new Date().toLocaleDateString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    );
-
-    // Simulate upload progress
-    const timer = setInterval(() => {
-      setUploadProgress((prev) => (prev < 100 ? prev + 1 : 0));
-    }, 50);
-
-    return () => clearInterval(timer);
+    const interval = setInterval(() => {
+      setLiveViewers(prev => prev + Math.floor(Math.random() * 10 - 5));
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const stats = [
-    {
-      label: "Total Views",
-      value: "1.2M",
-      change: "+12.5%",
-      trend: "up",
-      icon: EyeIcon,
-      gradient: "from-blue-500 to-cyan-500",
-      period: "vs last month",
-    },
-    {
-      label: "Watch Time",
-      value: "847h",
-      change: "+8.3%",
-      trend: "up",
-      icon: ClockIcon,
-      gradient: "from-purple-500 to-pink-500",
-      period: "this month",
-    },
-    {
-      label: "Revenue",
-      value: "$2,840",
-      change: "+23.1%",
-      trend: "up",
-      icon: CurrencyDollarIcon,
-      gradient: "from-green-500 to-emerald-500",
-      period: "this month",
-    },
-    {
-      label: "Subscribers",
-      value: "45.2K",
-      change: "+5.7%",
-      trend: "up",
-      icon: UserGroupIcon,
-      gradient: "from-orange-500 to-red-500",
-      period: "new this week",
-    },
-  ];
-
-  const quickActions = [
-    {
-      title: "Upload Video",
-      description: "Share your latest creation",
-      icon: VideoCameraIcon,
-      color: "from-purple-500 to-pink-500",
-      action: "upload",
-    },
-    {
-      title: "Go Live",
-      description: "Connect with your audience",
-      icon: RocketLaunchIcon,
-      color: "from-red-500 to-orange-500",
-      action: "live",
-    },
-    {
-      title: "Create Short",
-      description: "Quick vertical content",
-      icon: SparklesIcon,
-      color: "from-blue-500 to-cyan-500",
-      action: "short",
-    },
-    {
-      title: "Analytics",
-      description: "View detailed insights",
-      icon: ChartBarIcon,
-      color: "from-green-500 to-emerald-500",
-      action: "analytics",
-    },
-  ];
-
-  const recentVideos = [
-    {
-      id: 1,
-      title: "Building a Modern React App",
-      thumbnail:
-        "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=300&h=200&auto=format&fit=crop",
-      views: "23.4K",
-      likes: "1.2K",
-      comments: "89",
-      uploadDate: "2 days ago",
-      status: "published",
-      duration: "15:42",
-    },
-    {
-      id: 2,
-      title: "Next.js 14 Features Deep Dive",
-      thumbnail:
-        "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&auto=format&fit=crop",
-      views: "18.7K",
-      likes: "956",
-      comments: "67",
-      uploadDate: "5 days ago",
-      status: "published",
-      duration: "22:15",
-    },
-    {
-      id: 3,
-      title: "TypeScript Tips for Beginners",
-      thumbnail:
-        "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&h=200&auto=format&fit=crop",
-      views: "31.2K",
-      likes: "1.8K",
-      comments: "124",
-      uploadDate: "1 week ago",
-      status: "published",
-      duration: "18:33",
-    },
-  ];
-
-  const insights = [
-    {
-      title: "Peak Viewing Time",
-      value: "8-10 PM",
-      description: "Your audience is most active during evening hours",
-      icon: ClockIcon,
-      trend: "info",
-    },
-    {
-      title: "Top Performing Tag",
-      value: "#javascript",
-      description: "Videos with this tag get 40% more views",
-      icon: LightBulbIcon,
-      trend: "success",
-    },
-    {
-      title: "Audience Geography",
-      value: "North America",
-      description: "68% of your viewers are from this region",
-      icon: GlobeAltIcon,
-      trend: "info",
-    },
-  ];
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
+  const metrics = {
+    views: { value: "1.2M", label: "Total Views", detail: "847K from browse, 353K from search" },
+    retention: { value: "68%", label: "Avg Retention", detail: "Best: 'How to Edit' at 84%" },
+    revenue: { value: "$2.8K", label: "Est. Revenue", detail: "Ad revenue: $2.1K, Channel memberships: $700" },
+    growth: { value: "+18%", label: "Growth Rate", detail: "5.7K new subscribers this week" },
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: "spring" as const,
-        stiffness: 100,
-        damping: 15,
-      },
+  const topVideos = [
+    { 
+      id: 1, 
+      title: "The Future of AI Video Creation", 
+      metrics: { views: "234K", retention: "72%", revenue: "$487" },
+      thumbnail: "/api/placeholder/400/225",
+      trend: "rising"
     },
-  };
+    { 
+      id: 2, 
+      title: "Behind the Algorithm: How Views Work", 
+      metrics: { views: "189K", retention: "81%", revenue: "$412" },
+      thumbnail: "/api/placeholder/400/225",
+      trend: "stable"
+    },
+    { 
+      id: 3, 
+      title: "Studio Setup Tour 2024", 
+      metrics: { views: "156K", retention: "69%", revenue: "$378" },
+      thumbnail: "/api/placeholder/400/225",
+      trend: "declining"
+    },
+  ];
 
   return (
-    <div className="min-h-screen p-8 space-y-8">
-      {/* Welcome Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden"
-      >
-        <div className="relative z-10">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent mb-2">
-            {greeting}, Alex! ✨
-          </h1>
-          <p className="text-lg text-white/60 font-medium">{currentTime}</p>
-          <p className="text-white/50 mt-1">Ready to create something amazing today?</p>
+    <div className="min-h-screen bg-[#FAFAF8] text-[#1A1A1A] p-4 lg:p-12">
+      {/* Editorial Header */}
+      <header className="mb-16">
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-7xl lg:text-9xl font-thin tracking-tight leading-none mb-2">
+              Studio
+            </h1>
+            <div className="text-sm uppercase tracking-[0.3em] text-gray-500">
+              Analytics & Performance
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-5xl font-light tabular-nums">
+              {liveViewers.toLocaleString()}
+            </div>
+            <div className="text-xs uppercase tracking-wider text-gray-500 mt-1">
+              Live Now
+            </div>
+          </div>
         </div>
+        
+        {/* Horizontal Rule with Date */}
+        <div className="border-t border-black/10 pt-4">
+          <time className="text-xs uppercase tracking-wider text-gray-500">
+            {new Date().toLocaleDateString('en-US', { 
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </time>
+        </div>
+      </header>
 
-        {/* Floating elements */}
-        <motion.div
-          animate={{
-            y: [0, -10, 0],
-            rotate: [0, 5, 0],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute top-0 right-20 w-16 h-16 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full blur-xl"
-        />
-      </motion.div>
-
-      {/* Stats Grid - Bento Layout */}
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-      >
-        {stats.map((stat) => (
-          <motion.div
-            key={stat.label}
-            variants={itemVariants}
-            whileHover={{
-              scale: 1.02,
-              y: -4,
-              transition: { type: "spring", stiffness: 400, damping: 25 },
-            }}
-            className="group relative overflow-hidden"
-          >
-            <div className="relative p-6 backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl hover:border-white/20 transition-all duration-500">
-              {/* Gradient overlay */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500 rounded-3xl`}
-              />
-
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-2xl bg-gradient-to-br ${stat.gradient}`}>
-                    <stat.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div
-                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                      stat.trend === "up"
-                        ? "text-green-400 bg-green-500/20"
-                        : "text-red-400 bg-red-500/20"
-                    }`}
-                  >
-                    {stat.trend === "up" ? (
-                      <ArrowTrendingUpIcon className="w-3 h-3" />
-                    ) : (
-                      <ArrowTrendingDownIcon className="w-3 h-3" />
-                    )}
-                    {stat.change}
-                  </div>
-                </div>
-
-                <h3 className="text-3xl font-bold text-white mb-1">{stat.value}</h3>
-                <p className="text-sm text-white/60 font-medium">{stat.label}</p>
-                <p className="text-xs text-white/40 mt-1">{stat.period}</p>
-              </div>
-
-              {/* Shine effect */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 opacity-0 group-hover:opacity-100"
-                animate={{
-                  x: ["-100%", "200%"],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  repeatDelay: 3,
-                }}
-              />
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Quick Actions - Left Column */}
-        <motion.div
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-          className="xl:col-span-1"
-        >
-          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-6">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <RocketLaunchIcon className="w-5 h-5 text-purple-400" />
-              Quick Actions
-            </h2>
-
-            <div className="space-y-3">
-              {quickActions.map((action, index) => (
-                <motion.button
-                  key={action.title}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.02, x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full group"
-                >
-                  <div
-                    className={`relative overflow-hidden p-4 rounded-2xl bg-gradient-to-r ${action.color} hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <action.icon className="w-6 h-6 text-white" />
-                      <div className="text-left">
-                        <h3 className="font-semibold text-white">{action.title}</h3>
-                        <p className="text-sm text-white/80">{action.description}</p>
-                      </div>
-                      <ArrowUpRightIcon className="w-4 h-4 text-white/60 ml-auto group-hover:text-white transition-colors" />
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-
-            {/* Upload Progress */}
-            {uploadProgress > 0 && uploadProgress < 100 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="mt-6 p-4 bg-white/5 rounded-2xl border border-white/10"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                  <span className="text-sm font-medium text-white">Uploading video...</span>
-                </div>
-                <div className="w-full bg-white/10 rounded-full h-2">
-                  <motion.div
-                    className="h-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-                <p className="text-xs text-white/60 mt-1">{uploadProgress}% complete</p>
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Recent Videos - Right Columns */}
-        <motion.div
-          variants={itemVariants}
-          initial="hidden"
-          animate="visible"
-          className="xl:col-span-2"
-        >
-          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <PlayIcon className="w-5 h-5 text-blue-400" />
-                Recent Videos
-              </h2>
-              <button className="text-sm text-white/60 hover:text-white transition-colors">
-                View all
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {recentVideos.map((video, index) => (
-                <motion.div
-                  key={video.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.01, x: 4 }}
-                  className="group p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="relative flex-shrink-0 w-24 h-16">
-                      <Image
-                        src={video.thumbnail}
-                        alt={video.title}
-                        fill
-                        className="rounded-xl object-cover"
-                      />
-                      <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-xs font-medium text-white z-10">
-                        {video.duration}
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-white truncate group-hover:text-purple-200 transition-colors">
-                        {video.title}
-                      </h3>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-white/60">
-                        <span className="flex items-center gap-1">
-                          <EyeIcon className="w-4 h-4" />
-                          {video.views}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <HeartIcon className="w-4 h-4" />
-                          {video.likes}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <ChatBubbleLeftRightIcon className="w-4 h-4" />
-                          {video.comments}
-                        </span>
-                      </div>
-                      <p className="text-xs text-white/40 mt-1">{video.uploadDate}</p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
-                        {video.status}
-                      </span>
-                      <ArrowUpRightIcon className="w-4 h-4 text-white/40 group-hover:text-white/60 transition-colors" />
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Insights Section */}
-      <motion.div
-        variants={itemVariants}
-        initial="hidden"
-        animate="visible"
-        className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-6"
-      >
-        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-          <LightBulbIcon className="w-5 h-5 text-yellow-400" />
-          AI-Powered Insights
+      {/* Key Metrics - Editorial Grid */}
+      <section className="mb-20">
+        <h2 className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-8">
+          Key Performance Indicators
         </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {insights.map((insight, index) => (
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-black/10">
+          {Object.entries(metrics).map(([key, metric]) => (
             <motion.div
-              key={insight.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="group p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300"
+              key={key}
+              className="bg-[#FAFAF8] p-8 cursor-pointer relative overflow-hidden"
+              onClick={() => setSelectedMetric(selectedMetric === key ? null : key)}
+              whileHover={{ backgroundColor: "#F5F5F3" }}
             >
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20">
-                  <insight.icon className="w-5 h-5 text-yellow-400" />
+              <div className="relative z-10">
+                <div className="text-4xl lg:text-5xl font-light mb-2">
+                  {metric.value}
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white mb-1">{insight.title}</h3>
-                  <p className="text-lg font-bold text-purple-200 mb-2">{insight.value}</p>
-                  <p className="text-sm text-white/60 leading-relaxed">{insight.description}</p>
+                <div className="text-sm uppercase tracking-wider text-gray-600">
+                  {metric.label}
                 </div>
+                
+                <AnimatePresence>
+                  {selectedMetric === key && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-4 pt-4 border-t border-black/10"
+                    >
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {metric.detail}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              
+              {/* Decorative number */}
+              <div className="absolute -bottom-4 -right-4 text-[120px] font-thin text-black/5 leading-none select-none">
+                {key === 'views' && '01'}
+                {key === 'retention' && '02'}
+                {key === 'revenue' && '03'}
+                {key === 'growth' && '04'}
               </div>
             </motion.div>
           ))}
         </div>
-      </motion.div>
+      </section>
+
+      {/* Top Performing Content - Magazine Layout */}
+      <section className="mb-20">
+        <div className="flex items-baseline justify-between mb-8">
+          <h2 className="text-xs uppercase tracking-[0.3em] text-gray-500">
+            Top Performing Content
+          </h2>
+          <button className="text-xs uppercase tracking-wider text-gray-600 hover:text-black transition-colors">
+            View All →
+          </button>
+        </div>
+
+        <div className="space-y-px bg-black/10">
+          {topVideos.map((video, index) => (
+            <motion.article
+              key={video.id}
+              className="bg-[#FAFAF8] hover:bg-[#F5F5F3] transition-colors"
+              onHoverStart={() => setHoveredVideo(video.id)}
+              onHoverEnd={() => setHoveredVideo(null)}
+            >
+              <div className="grid grid-cols-12 gap-8 p-8">
+                {/* Index */}
+                <div className="col-span-1 text-5xl font-thin text-gray-300">
+                  {String(index + 1).padStart(2, '0')}
+                </div>
+
+                {/* Content */}
+                <div className="col-span-7">
+                  <h3 className="text-2xl lg:text-3xl font-light leading-tight mb-4">
+                    {video.title}
+                  </h3>
+                  
+                  <div className="flex items-center gap-8 text-sm">
+                    <div>
+                      <span className="text-gray-500">Views</span>
+                      <span className="ml-2 font-medium">{video.metrics.views}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Retention</span>
+                      <span className="ml-2 font-medium">{video.metrics.retention}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Revenue</span>
+                      <span className="ml-2 font-medium">{video.metrics.revenue}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trend Indicator */}
+                <div className="col-span-4 flex items-center justify-end">
+                  <div className="text-right">
+                    <div className={`text-sm uppercase tracking-wider ${
+                      video.trend === 'rising' ? 'text-green-600' : 
+                      video.trend === 'declining' ? 'text-red-600' : 
+                      'text-gray-500'
+                    }`}>
+                      {video.trend}
+                    </div>
+                    
+                    {/* Minimalist sparkline */}
+                    <svg width="80" height="30" className="mt-2">
+                      <path
+                        d={video.trend === 'rising' ? 
+                          "M0,25 L20,20 L40,15 L60,10 L80,5" : 
+                          video.trend === 'declining' ?
+                          "M0,5 L20,10 L40,15 L60,20 L80,25" :
+                          "M0,15 L20,14 L40,15 L60,14 L80,15"
+                        }
+                        fill="none"
+                        stroke={
+                          video.trend === 'rising' ? '#16a34a' : 
+                          video.trend === 'declining' ? '#dc2626' : 
+                          '#9ca3af'
+                        }
+                        strokeWidth="1"
+                        opacity="0.5"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hover Preview */}
+              <AnimatePresence>
+                {hoveredVideo === video.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="border-t border-black/10"
+                  >
+                    <div className="p-8 grid grid-cols-12 gap-8">
+                      <div className="col-span-1"></div>
+                      <div className="col-span-11">
+                        <div className="bg-black/5 aspect-video rounded-sm"></div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.article>
+          ))}
+        </div>
+      </section>
+
+      {/* Quick Actions - Minimal */}
+      <section className="border-t border-black/10 pt-12">
+        <div className="flex items-center gap-4">
+          <motion.button
+            className="px-8 py-4 bg-black text-white text-sm uppercase tracking-wider hover:bg-gray-800 transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Upload New
+          </motion.button>
+          <motion.button
+            className="px-8 py-4 border border-black/20 text-sm uppercase tracking-wider hover:border-black hover:bg-black hover:text-white transition-all"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            View Analytics
+          </motion.button>
+          <motion.button
+            className="px-8 py-4 text-sm uppercase tracking-wider hover:text-gray-600 transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Settings
+          </motion.button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="mt-32 pt-8 border-t border-black/10">
+        <div className="flex items-center justify-between text-xs uppercase tracking-wider text-gray-500">
+          <div>Fabl Studio™</div>
+          <div>Last sync: {new Date().toLocaleTimeString()}</div>
+        </div>
+      </footer>
     </div>
   );
 }
