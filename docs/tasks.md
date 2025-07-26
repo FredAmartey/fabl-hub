@@ -123,7 +123,73 @@ This architecture provides complete separation of concerns between viewing and c
   - End: All core entity types defined and exported
   - Test: All types importable and TypeScript validates in both frontend and backend
 
-## Phase 2: Backend API Foundation
+## Phase 2: Shared Packages & Backend Structure
+
+### 2.1 Monorepo Package Structure
+
+- **Task 2.1.1**: Create shared packages directory structure
+
+  - Start: Current monorepo with hub and studio apps
+  - End: `/packages` directory with db, types, and utils subdirectories
+  - Test: Package directories exist with proper package.json files
+
+- **Task 2.1.2**: Set up shared database package
+
+  - Start: Package structure exists
+  - End: `/packages/db` contains Prisma schema and migrations
+  - Test: Prisma commands work from package directory
+
+- **Task 2.1.3**: Create shared types package
+
+  - Start: Database package exists
+  - End: `/packages/types` exports all shared TypeScript interfaces
+  - Test: Types can be imported in both hub and studio apps
+
+- **Task 2.1.4**: Create shared utilities package
+
+  - Start: Types package exists
+  - End: `/packages/utils` contains validation, formatting helpers
+  - Test: Utilities work across all applications
+
+- **Task 2.1.5**: Configure monorepo workspace dependencies
+
+  - Start: All packages created
+  - End: Apps can import from @fabl/db, @fabl/types, @fabl/utils
+  - Test: TypeScript resolves shared packages correctly
+
+### 2.2 Shared API Service Setup
+
+- **Task 2.2.1**: Create Fastify API application structure
+
+  - Start: Monorepo packages configured
+  - End: `/apps/api` directory with Fastify boilerplate
+  - Test: Fastify server starts on port 3002
+
+- **Task 2.2.2**: Implement shared middleware
+
+  - Start: Basic Fastify server runs
+  - End: Auth, CORS, logging, rate limiting middleware configured
+  - Test: Middleware properly intercepts requests
+
+- **Task 2.2.3**: Set up route structure
+
+  - Start: Middleware configured
+  - End: `/apps/api/src/routes` with organized endpoint structure
+  - Test: Sample routes respond correctly
+
+- **Task 2.2.4**: Create services layer
+
+  - Start: Routes structure exists
+  - End: `/apps/api/src/services` with business logic separation
+  - Test: Services properly abstract database operations
+
+- **Task 2.2.5**: Configure Docker development environment
+
+  - Start: API service exists
+  - End: docker-compose.yml with API, database, Redis services
+  - Test: `docker-compose up` starts full development stack
+
+## Phase 3: Backend API Foundation
 
 ### 2.1 Fastify Server Setup
 
@@ -221,7 +287,55 @@ This architecture provides complete separation of concerns between viewing and c
   - End: List all channels for a specific user
   - Test: Returns array of channels for user
 
-## Phase 4: Video Infrastructure
+## Phase 4: BFF Pattern Implementation
+
+### 4.1 Hub BFF Layer
+
+- **Task 4.1.1**: Create Next.js API routes structure in Hub
+
+  - Start: Hub app running
+  - End: `/apps/hub/src/api` directory with route handlers
+  - Test: API routes accessible at /api/* endpoints
+
+- **Task 4.1.2**: Implement authentication proxy
+
+  - Start: API routes structure exists
+  - End: Auth tokens validated and forwarded to Fastify API
+  - Test: Protected routes require valid authentication
+
+- **Task 4.1.3**: Add response caching layer
+
+  - Start: Auth proxy works
+  - End: Frequently accessed data cached in Next.js API
+  - Test: Cache headers properly set, performance improved
+
+- **Task 4.1.4**: Implement API aggregation
+
+  - Start: Caching works
+  - End: Single Hub API call can fetch from multiple Fastify endpoints
+  - Test: Reduced client-side API calls
+
+### 4.2 Studio BFF Layer
+
+- **Task 4.2.1**: Create Next.js API routes structure in Studio
+
+  - Start: Studio app running
+  - End: `/apps/studio/src/api` directory with route handlers
+  - Test: API routes accessible at /api/* endpoints
+
+- **Task 4.2.2**: Implement creator-specific API logic
+
+  - Start: API routes structure exists
+  - End: Upload tokens, analytics aggregation handled in BFF
+  - Test: Creator workflows simplified
+
+- **Task 4.2.3**: Add file upload preprocessing
+
+  - Start: Creator API logic works
+  - End: Video validation before sending to Mux
+  - Test: Invalid files rejected at BFF layer
+
+## Phase 5: Video Infrastructure
 
 ### 4.1 Mux Integration Setup
 
@@ -300,28 +414,86 @@ This architecture provides complete separation of concerns between viewing and c
   - End: Upload button redirects to Studio with auth token
   - Test: Seamless redirect to Studio upload page when authenticated
 
-### 5.2 Hub Core Features
+### 5.2 UI Consistency & Data Integration
 
-- **Task 5.2.1**: Implement video browsing on homepage
+- **Task 5.2.1**: Replace hardcoded profile data with dynamic user data
 
-  - Start: Hub app with authentication
+  - Start: Header component with hardcoded profile info
+  - End: Profile dropdown shows real user data (name, avatar, username)
+  - Test: Profile dropdown reflects actual logged-in user information
+
+- **Task 5.2.2**: Sync profile avatar between icon and dropdown
+
+  - Start: User icon shows generic gradient, dropdown shows real image
+  - End: User icon displays actual user profile picture as avatar
+  - Test: Profile icon and dropdown show same user image consistently
+
+- **Task 5.2.3**: Replace mock notification data with real notifications
+
+  - Start: Notifications dropdown shows hardcoded sample data
+  - End: Notifications reflect real user activity (likes, comments, subscriptions)
+  - Test: Notification count and content updates based on actual user activity
+
+- **Task 5.2.4**: Remove hardcoded fallback data throughout components
+
+  - Start: Components have placeholder/mock data
+  - End: All components show loading states or real data, no hardcoded fallbacks
+  - Test: No placeholder usernames, images, or content visible in production
+
+### 5.3 Hub Core Features
+
+- **Task 5.3.1**: Implement video browsing on homepage
+
+  - Start: UI consistency issues resolved
   - End: Homepage displays video grid with real data
-  - Test: Videos load and display correctly
+  - Test: Videos load and display correctly with real thumbnails and metadata
 
-- **Task 5.2.2**: Create video player page
+- **Task 5.3.2**: Create video player page
 
   - Start: Video browsing works
   - End: Individual video pages with player and metadata
   - Test: Videos play correctly with comments/likes visible
 
-- **Task 5.2.3**: Implement search functionality
+- **Task 5.3.3**: Implement search functionality
   - Start: Video player works
   - End: Search bar returns relevant video results
   - Test: Search queries return appropriate videos
 
-### 5.3 Authentication Integration
+- **Task 5.3.4**: Replace hardcoded video data with dynamic content
 
-- **Task 5.3.1**: Create authentication routes
+  - Start: VideoCard and VideoGrid components exist
+  - End: All video data comes from API, no hardcoded video information
+  - Test: Video cards show real titles, views, creators, upload dates
+
+### 5.4 Additional Hub Features
+
+- **Task 5.4.1**: Implement Explore page functionality
+
+  - Start: Basic page structure exists
+  - End: Explore page shows curated content categories
+  - Test: Different content sections load with real data
+
+- **Task 5.4.2**: Complete Settings page implementation
+
+  - Start: Settings UI with tabs exists
+  - End: All settings (permissions, defaults, privacy) functional
+  - Test: Settings changes persist and affect app behavior
+
+- **Task 5.4.3**: Implement Help/Support section
+
+  - Start: Help directory exists
+  - End: Help pages with FAQs, guides, and support contact
+  - Test: Help content accessible and searchable
+
+- **Task 5.4.4**: Add chart components for analytics
+
+  - Start: LineChart and DonutChart components exist
+  - End: Charts display real user/video analytics data
+  - Test: Charts update with real-time data
+
+### 5.5 Authentication Integration
+
+- **Task 5.5.1**: Create authentication routes
 
   - Start: React Router configured
   - End: `/sign-in` and `/sign-up` routes with Clerk components
@@ -371,46 +543,104 @@ This architecture provides complete separation of concerns between viewing and c
   - End: Successful uploads create video records
   - Test: Video appears in creator's content dashboard
 
-### 6.2 Studio Creator Dashboard
+### 6.2 Studio UI Consistency & Data Integration
 
-- **Task 6.2.1**: Create content management dashboard
+- **Task 6.2.1**: Replace hardcoded studio dashboard data
 
-  - Start: Upload functionality complete
-  - End: Dashboard shows creator's uploaded videos
-  - Test: Videos listed with views, likes, comments count
+  - Start: Studio dashboard with mock analytics data
+  - End: Dashboard shows real creator analytics and video metrics
+  - Test: All charts and numbers reflect actual user data
 
-- **Task 6.2.2**: Implement video editing functionality
+- **Task 6.2.2**: Implement dynamic video management
 
-  - Start: Dashboard displays videos
+  - Start: Studio shows placeholder video content
+  - End: Studio displays actual uploaded videos with real metadata
+  - Test: Video list updates when new videos are uploaded
+
+- **Task 6.2.3**: Sync user profile between Hub and Studio
+
+  - Start: Different profile data in each app
+  - End: Consistent user profile information across both apps
+  - Test: Profile changes in one app immediately reflect in the other
+
+### 6.3 Studio Creator Dashboard
+
+- **Task 6.3.1**: Create content management dashboard
+
+  - Start: UI consistency resolved
+  - End: Dashboard shows creator's uploaded videos with real data
+  - Test: Videos listed with actual views, likes, comments count
+
+- **Task 6.3.2**: Implement video editing functionality
+
+  - Start: Dashboard displays real videos
   - End: Creators can edit video title, description, thumbnail
   - Test: Edits save correctly and reflect in Hub app
 
-- **Task 6.2.3**: Add analytics dashboard
+- **Task 6.3.3**: Add analytics dashboard
   - Start: Video editing works
-  - End: Basic analytics showing views, engagement metrics
-  - Test: Analytics data updates correctly
+  - End: Analytics showing real views, engagement metrics
+  - Test: Analytics data updates correctly based on actual user activity
 
-### 6.3 Cross-App Integration
+### 6.4 Additional Studio Features
 
-- **Task 6.3.1**: Ensure authentication persistence
+- **Task 6.4.1**: Implement Audio Library functionality
+
+  - Start: Audio library page structure exists
+  - End: Creators can browse and use royalty-free audio
+  - Test: Audio tracks can be searched and added to videos
+
+- **Task 6.4.2**: Build Monetization dashboard
+
+  - Start: Monetization page exists
+  - End: Revenue tracking, ad settings, sponsorship management
+  - Test: Monetization metrics display correctly
+
+- **Task 6.4.3**: Create Playlist management
+
+  - Start: Playlists directory exists
+  - End: Creators can create, edit, and organize playlists
+  - Test: Playlists sync with Hub app for viewers
+
+- **Task 6.4.4**: Implement Customization features
+
+  - Start: Customization page exists
+  - End: Channel branding, layout customization options
+  - Test: Customizations reflect in Hub channel pages
+
+- **Task 6.4.5**: Add Modal system for workflows
+
+  - Start: Modal component exists
+  - End: All Studio workflows use consistent modal patterns
+  - Test: Modals handle forms, confirmations, and multi-step processes
+
+- **Task 6.4.6**: Implement enhanced Studio layout
+
+  - Start: StudioLayoutEnhanced component exists
+  - End: Collapsible sidebar, tooltips, smooth animations
+  - Test: Layout responsive and maintains state across navigation
+
+### 6.5 Cross-App Integration
+
+- **Task 6.5.1**: Ensure authentication persistence
 
   - Start: Both apps have authentication
   - End: Signing in on Hub persists to Studio and vice versa
   - Test: SSO flow works seamlessly between apps
 
-- **Task 6.3.2**: Implement shared user profile
+- **Task 6.5.2**: Implement shared user profile
 
   - Start: SSO working
   - End: User profile changes in one app reflect in the other
   - Test: Profile updates synchronize across apps
 
-- **Task 6.3.3**: Create navigation between apps
+- **Task 6.5.3**: Create navigation between apps
 
   - Start: Shared profile works
   - End: Clear navigation paths between Hub and Studio
   - Test: Users can easily switch between viewing and creating
 
-- **Task 6.3.4**: Implement notification sync
+- **Task 6.5.4**: Implement notification sync
   - Start: Navigation works
   - End: Notifications appear in both apps appropriately
   - Test: Creator notifications in Studio, viewer notifications in Hub
@@ -492,66 +722,142 @@ This architecture provides complete separation of concerns between viewing and c
   - End: `/subscriptions` shows user's subscribed channels
   - Test: Page lists subscribed channels with recent videos
 
-## Phase 8: Content Moderation
+## Phase 8: Content Moderation & AI Enforcement
 
-### 8.1 Moderation Queue Setup
+### 8.1 Queue Infrastructure Setup
 
-- **Task 8.1.1**: Install and configure BullMQ
+- **Task 8.1.1**: Install and configure BullMQ with Redis
 
-  - Start: Social features complete
-  - End: Redis-backed job queue operational
-  - Test: Jobs can be added to and processed from queue
+  - Start: Redis running in Docker
+  - End: BullMQ connected and operational
+  - Test: Can add and process test jobs
 
-- **Task 8.1.2**: Create moderation job processor
+- **Task 8.1.2**: Create workers directory structure
 
   - Start: BullMQ configured
+  - End: `/apps/api/src/workers` with moderation and AI detection workers
+  - Test: Workers can be started independently
+
+- **Task 8.1.3**: Implement worker health monitoring
+
+  - Start: Workers running
+  - End: Health checks and auto-restart on failure
+  - Test: Workers recover from crashes
+
+### 8.2 Content Moderation Implementation
+
+- **Task 8.2.1**: Create moderation worker
+
+  - Start: Worker structure exists
   - End: Worker processes video moderation jobs
-  - Test: Jobs execute and update video status in DB
+  - Test: Jobs execute and update video status
 
-- **Task 8.1.3**: Integrate moderation API (Hive or AWS Rekognition)
+- **Task 8.2.2**: Integrate Hive API for NSFW detection
 
-  - Start: Job processor exists
-  - End: Worker calls external moderation service
-  - Test: API returns moderation results correctly
+  - Start: Moderation worker exists
+  - End: Hive API validates video content
+  - Test: NSFW content properly flagged
 
-- **Task 8.1.4**: Add moderation status to video schema
-  - Start: Moderation API integrated
-  - End: Videos have pending/approved/rejected status
-  - Test: Video status updates based on moderation results
+- **Task 8.2.3**: Implement webhook validation
 
-### 8.2 AI Content Detection
+  - Start: Hive API integrated
+  - End: Webhook signatures validated for security
+  - Test: Invalid webhooks rejected
 
-- **Task 8.2.1**: Add AI detection job to moderation pipeline
+### 8.3 AI Content Detection Pipeline
 
-  - Start: Basic moderation works
-  - End: Videos analyzed for AI content ratio
-  - Test: AI ratio calculated and stored for each video
+- **Task 8.3.1**: Implement frame extraction worker
 
-- **Task 8.2.2**: Implement AI ratio enforcement
+  - Start: Worker infrastructure ready
+  - End: Extract 1 frame per second from Mux videos
+  - Test: Frames saved for processing
 
-  - Start: AI detection works
-  - End: Videos with <30% AI content rejected
-  - Test: Non-AI videos properly flagged and hidden
+- **Task 8.3.2**: Integrate AI detection classifier
 
-- **Task 8.2.3**: Add moderation status to video API responses
-  - Start: AI enforcement works
-  - End: API includes moderation status in video data
-  - Test: Frontend can display pending/rejected videos correctly
+  - Start: Frame extraction works
+  - End: Frames analyzed by AI detector (Sensity/Amber/Custom)
+  - Test: Each frame gets AI/real classification
 
-### 8.3 Moderation UI
+- **Task 8.3.3**: Calculate AI ratio percentage
 
-- **Task 8.3.1**: Add upload status indicators
+  - Start: Frame classification works
+  - End: Overall video AI percentage calculated
+  - Test: Accurate ratio stored in database
+
+- **Task 8.3.4**: Implement 30% threshold enforcement
+
+  - Start: AI ratio calculated
+  - End: Videos <30% AI automatically rejected
+  - Test: Only AI content passes moderation
+
+- **Task 8.3.5**: Add frame sampling configuration
+
+  - Start: Basic frame extraction works
+  - End: Configurable sampling rate (frames per second)
+  - Test: Different sampling rates produce accurate results
+
+### 8.4 Moderation UI
+
+- **Task 8.4.1**: Add upload status indicators
 
   - Start: Moderation status in API
   - End: Upload page shows processing/approved/rejected status
   - Test: Users see clear feedback on upload status
 
-- **Task 8.3.2**: Filter approved videos in public listings
+- **Task 8.4.2**: Filter approved videos in public listings
   - Start: Status indicators work
   - End: Only approved videos appear in public feeds
   - Test: Rejected videos don't appear in public areas
 
-## Phase 9: Basic Recommendations
+## Phase 9: Security Implementation
+
+### 9.1 API Security
+
+- **Task 9.1.1**: Implement rate limiting
+
+  - Start: Fastify API running
+  - End: Rate limits on all public endpoints
+  - Test: Excessive requests properly throttled
+
+- **Task 9.1.2**: Add input validation middleware
+
+  - Start: Rate limiting works
+  - End: All inputs validated and sanitized
+  - Test: Malicious inputs rejected
+
+- **Task 9.1.3**: Configure CORS properly
+
+  - Start: Input validation works
+  - End: CORS locked to frontend origins only
+  - Test: Cross-origin requests properly handled
+
+- **Task 9.1.4**: Implement security headers
+
+  - Start: CORS configured
+  - End: Security headers (HSTS, CSP, etc.) set
+  - Test: Security scan shows proper headers
+
+### 9.2 Authentication Security
+
+- **Task 9.2.1**: Implement JWT refresh tokens
+
+  - Start: Basic JWT auth works
+  - End: Short-lived tokens with refresh mechanism
+  - Test: Tokens expire and refresh properly
+
+- **Task 9.2.2**: Add session management
+
+  - Start: Refresh tokens work
+  - End: Centralized session tracking across apps
+  - Test: Sessions can be revoked
+
+- **Task 9.2.3**: Implement webhook signature validation
+
+  - Start: Sessions work
+  - End: All webhooks (Mux, Hive) validated
+  - Test: Invalid signatures rejected
+
+## Phase 10: Recommendation Engine
 
 ### 9.1 View Tracking
 
@@ -609,52 +915,303 @@ This architecture provides complete separation of concerns between viewing and c
   - End: Homepage shows mix of recent and recommended videos
   - Test: Authenticated users see personalized content
 
-## Phase 10: Testing & Polish
+## Phase 10: Mock to Real Data Transition
 
-### 10.1 Integration Testing
+### 10.1 Data Fetching Infrastructure
 
-- **Task 10.1.1**: Write API integration tests
+- **Task 10.1.1**: Create API client utilities
 
-  - Start: All features implemented
+  - Start: API endpoints exist
+  - End: Centralized API client in packages/utils
+  - Test: Client handles auth, errors, retries
+
+- **Task 10.1.2**: Add React Query to Hub app
+
+  - Start: API client exists
+  - End: React Query configured with providers
+  - Test: Basic query works with caching
+
+- **Task 10.1.3**: Add React Query to Studio app
+
+  - Start: Hub has React Query
+  - End: Studio configured with React Query
+  - Test: Data fetching with loading states
+
+- **Task 10.1.4**: Create custom hooks for data fetching
+
+  - Start: React Query configured
+  - End: useUser, useVideos, useNotifications hooks
+  - Test: Hooks return proper loading/error states
+
+### 10.2 Component Migration - Hub
+
+- **Task 10.2.1**: Migrate Header user data
+
+  - Start: Header shows "Alex Neural"
+  - End: Header shows real logged-in user
+  - Test: Profile pic, name update dynamically
+
+- **Task 10.2.2**: Migrate notifications to real data
+
+  - Start: Hardcoded notification array
+  - End: Real notifications from API
+  - Test: New notifications appear in real-time
+
+- **Task 10.2.3**: Migrate VideoCard/Grid components
+
+  - Start: Mock video data
+  - End: Videos fetched from API
+  - Test: Pagination and filtering work
+
+- **Task 10.2.4**: Add loading skeletons
+
+  - Start: Components without loading states
+  - End: Smooth skeleton loaders during fetch
+  - Test: No layout shift when data loads
+
+### 10.3 Component Migration - Studio
+
+- **Task 10.3.1**: Migrate dashboard analytics
+
+  - Start: Static chart data
+  - End: Real metrics from API
+  - Test: Charts update with date ranges
+
+- **Task 10.3.2**: Migrate content management
+
+  - Start: Mock video list
+  - End: Creator's actual videos
+  - Test: CRUD operations work
+
+- **Task 10.3.3**: Add error boundaries
+
+  - Start: No error handling
+  - End: Graceful error states
+  - Test: API failures don't crash app
+
+### 10.4 Feature Flags & Rollout
+
+- **Task 10.4.1**: Implement feature flag system
+
+  - Start: All or nothing deployment
+  - End: Gradual feature rollout capability
+  - Test: Can toggle between mock and real
+
+- **Task 10.4.2**: Create staging environment
+
+  - Start: Local development only
+  - End: Staging with real API, test data
+  - Test: All flows work in staging
+
+- **Task 10.4.3**: Production rollout plan
+
+  - Start: Feature flags configured
+  - End: Phased rollout to users
+  - Test: Can rollback if issues occur
+
+## Phase 11: Skeleton-to-Functional UI Audit
+
+### 10.1 Comprehensive UI Consistency Review
+
+- **Task 10.1.1**: Audit all hardcoded user data
+
+  - Start: All core features implemented
+  - End: Complete list of all hardcoded user information across both apps
+  - Test: Documentation of every instance of mock/placeholder user data
+
+- **Task 10.1.2**: Audit all hardcoded content data
+
+  - Start: User data audit complete
+  - End: Complete list of all hardcoded videos, comments, likes, etc.
+  - Test: Documentation of every instance of mock/placeholder content
+
+- **Task 10.1.3**: Audit visual inconsistencies
+
+  - Start: Content data audit complete
+  - End: List of all visual mismatches between different UI states
+  - Test: Screenshots documenting inconsistencies (like profile icon vs dropdown)
+
+### 10.2 Data Integration Fixes
+
+- **Task 10.2.1**: Replace all hardcoded user references
+
+  - Start: UI inconsistencies documented
+  - End: All user data dynamically sourced from authentication/API
+  - Test: No hardcoded usernames, emails, or IDs anywhere in the UI
+
+- **Task 10.2.2**: Implement consistent avatar/profile image system
+
+  - Start: User data dynamic
+  - End: User avatars consistent across all components and states
+  - Test: Profile image matches between header icon, dropdowns, and profile pages
+
+- **Task 10.2.3**: Remove all placeholder content
+
+  - Start: Avatar system consistent
+  - End: All video, comment, and notification data sourced from APIs
+  - Test: No "Alex Neural" or other placeholder names/content visible
+
+### 10.3 Loading States & Error Handling
+
+- **Task 10.3.1**: Add loading states for all dynamic content
+
+  - Start: Placeholder content removed
+  - End: Proper loading skeletons/spinners for all API-dependent UI
+  - Test: Graceful loading states when data is being fetched
+
+- **Task 10.3.2**: Add empty states for all lists/grids
+
+  - Start: Loading states implemented
+  - End: Appropriate empty states when users have no content
+  - Test: Empty video lists, notifications, etc. show helpful empty states
+
+- **Task 10.3.3**: Add error states for failed API calls
+
+  - Start: Empty states implemented
+  - End: Error handling and retry mechanisms for all API failures
+  - Test: Network errors display user-friendly error messages
+
+## Phase 11: Testing Infrastructure
+
+### 11.1 Unit Testing Setup
+
+- **Task 11.1.1**: Set up testing framework for Hub app
+
+  - Start: No testing infrastructure
+  - End: Jest and React Testing Library configured
+  - Test: Sample test runs successfully
+
+- **Task 11.1.2**: Set up testing framework for Studio app
+
+  - Start: No testing infrastructure
+  - End: Jest and React Testing Library configured
+  - Test: Sample test runs successfully
+
+- **Task 11.1.3**: Write component tests for UI library
+
+  - Start: Testing frameworks configured
+  - End: All UI components have basic unit tests
+  - Test: Component tests pass with coverage > 80%
+
+### 11.2 Integration Testing
+
+- **Task 11.2.1**: Write API integration tests
+
+  - Start: Unit tests complete
   - End: Core API endpoints have integration tests
-  - Test: Test suite runs successfully in CI
+  - Test: Test suite runs successfully
 
-- **Task 10.1.2**: Write frontend component tests
+- **Task 11.2.2**: Write cross-app integration tests
+
   - Start: API tests exist
-  - End: Key components have unit tests
-  - Test: Frontend tests pass consistently
+  - End: SSO and navigation flows tested
+  - Test: Cross-app workflows verified
 
-### 10.2 Performance Optimization
+### 11.3 E2E Testing
 
-- **Task 10.2.1**: Add database indexing
+- **Task 11.3.1**: Set up Playwright for E2E testing
 
-  - Start: Tests complete
-  - End: Key queries have proper database indexes
-  - Test: Query performance improved measurably
+  - Start: Integration tests complete
+  - End: Playwright configured for both apps
+  - Test: Basic E2E test runs successfully
 
-- **Task 10.2.2**: Implement API response caching
-  - Start: Database optimized
-  - End: Frequently accessed data cached appropriately
-  - Test: Cache hit rates show performance improvement
+- **Task 11.3.2**: Write critical user journey tests
 
-### 10.3 Production Readiness
+  - Start: Playwright configured
+  - End: Sign up, upload, view video flows tested
+  - Test: All critical paths have E2E coverage
 
-- **Task 10.3.1**: Add error handling and logging
+## Phase 12: DevOps & Deployment
 
-  - Start: Caching implemented
-  - End: Comprehensive error handling and structured logging
-  - Test: Errors are caught and logged appropriately
+### 12.1 CI/CD Pipeline
 
-- **Task 10.3.2**: Add health check endpoints
+- **Task 12.1.1**: Set up GitHub Actions for CI
 
-  - Start: Error handling complete
-  - End: Health checks for API, database, and external services
-  - Test: Health checks return correct status information
+  - Start: No CI configuration
+  - End: Automated testing on pull requests
+  - Test: CI runs on every PR
 
-- **Task 10.3.3**: Configure production environment
-  - Start: Health checks work
-  - End: Production deployment configuration ready
-  - Test: Application runs correctly in production environment
+- **Task 12.1.2**: Configure deployment pipeline
+
+  - Start: CI working
+  - End: Automated deployment to staging/production
+  - Test: Deployments triggered by merges
+
+### 12.2 Infrastructure Setup
+
+- **Task 12.2.1**: Configure production environments
+
+  - Start: Local development only
+  - End: Production infrastructure provisioned
+  - Test: Both apps accessible on production URLs
+
+- **Task 12.2.2**: Set up monitoring and logging
+
+  - Start: No monitoring
+  - End: Error tracking, performance monitoring active
+  - Test: Alerts configured for critical issues
+
+### 12.3 Performance Optimization
+
+- **Task 12.3.1**: Implement code splitting
+
+  - Start: Large bundle sizes
+  - End: Dynamic imports for route-based splitting
+  - Test: Initial bundle size < 200KB
+
+- **Task 12.3.2**: Add caching strategies
+
+  - Start: No caching
+  - End: CDN, browser, and API caching configured
+  - Test: Performance metrics improved
+
+- **Task 12.3.3**: Optimize images and assets
+
+  - Start: Unoptimized assets
+  - End: Image optimization, lazy loading implemented
+  - Test: Lighthouse scores > 90
+
+## Phase 13: Monitoring & Observability
+
+### 13.1 Datadog Setup
+
+- **Task 13.1.1**: Install Datadog agent
+
+  - Start: Production infrastructure ready
+  - End: Datadog agent running on all services
+  - Test: Basic metrics visible in Datadog
+
+- **Task 13.1.2**: Configure custom metrics
+
+  - Start: Agent installed
+  - End: Business metrics (uploads, views) tracked
+  - Test: Custom dashboards show real data
+
+- **Task 13.1.3**: Set up distributed tracing
+
+  - Start: Custom metrics work
+  - End: Request traces across all services
+  - Test: Can trace requests from frontend to backend
+
+### 13.2 Logging Infrastructure
+
+- **Task 13.2.1**: Configure centralized logging
+
+  - Start: Services running
+  - End: All logs aggregated in central location
+  - Test: Can search logs across services
+
+- **Task 13.2.2**: Implement structured logging
+
+  - Start: Central logging works
+  - End: Logs in JSON format with context
+  - Test: Can filter logs by request ID
+
+- **Task 13.2.3**: Set up alerts
+
+  - Start: Structured logging works
+  - End: Alerts for errors, performance issues
+  - Test: Alerts trigger on test conditions
 
 ---
 
