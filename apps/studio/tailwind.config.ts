@@ -9,18 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
+        inter: ["var(--font-inter)", "system-ui", "sans-serif"],
         afacad: ["Afacad", "sans-serif"],
       },
       colors: {
         studio: {
-          background: "#0a0a0f",
-          surface: "#1a1a2e",
-          border: "#2a2a3e",
-          primary: "#8b5cf6",
+          background: "#0f172a", // slate-900 to match hub
+          surface: "#1e293b", // slate-800
+          border: "#334155", // slate-700
+          primary: "#8b5cf6", // violet-500
           text: {
-            primary: "#ffffff",
-            secondary: "#a0a0b8",
-            muted: "#6b6b80",
+            primary: "#f8fafc", // slate-50
+            secondary: "#94a3b8", // slate-400
+            muted: "#64748b", // slate-500
           },
         },
       },

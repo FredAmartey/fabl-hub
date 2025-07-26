@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} font-inter antialiased bg-studio-background text-white min-h-screen`}
+        className={`${inter.variable} font-inter antialiased bg-slate-900 text-white min-h-screen`}
         suppressHydrationWarning
       >
         <StudioLayout>{children}</StudioLayout>

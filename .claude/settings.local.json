@@ -28,7 +28,10 @@
       "Bash(kill:*)",
       "mcp__claudepoint__create_checkpoint",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git revert:*)",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_console_messages"
     ],
     "deny": []
   }

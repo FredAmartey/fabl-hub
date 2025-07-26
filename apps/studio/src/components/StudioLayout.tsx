@@ -1,462 +1,171 @@
-'use client'
+"use client";
 
-import { useState, useRef, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { motion, AnimatePresence, useAnimationControls } from 'framer-motion'
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
-  SparklesIcon,
+  HomeIcon,
   PlayIcon,
-  RectangleStackIcon,
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
-  LanguageIcon,
   CurrencyDollarIcon,
-  SwatchIcon,
-  MusicalNoteIcon,
-  AdjustmentsVerticalIcon,
-  CloudArrowUpIcon,
+  Cog6ToothIcon,
   Bars3Icon,
-  XMarkIcon,
+  ArrowUpTrayIcon,
   BellIcon,
   MagnifyingGlassIcon,
-} from '@heroicons/react/24/outline'
+  UserIcon,
+  ArrowRightOnRectangleIcon,
+  QuestionMarkCircleIcon,
+} from "@heroicons/react/24/outline";
 
 const navigationItems = [
-  { 
-    name: 'Studio Home', 
-    href: '/', 
-    icon: SparklesIcon,
-    gradient: 'from-purple-500 to-pink-500',
-    description: 'Your creative dashboard'
-  },
-  { 
-    name: 'Content Library', 
-    href: '/content', 
-    icon: PlayIcon,
-    gradient: 'from-blue-500 to-cyan-500',
-    description: 'Manage your videos'
-  },
-  { 
-    name: 'Playlists', 
-    href: '/playlists', 
-    icon: RectangleStackIcon,
-    gradient: 'from-green-500 to-emerald-500',
-    description: 'Organize content'
-  },
-  { 
-    name: 'Analytics', 
-    href: '/analytics', 
-    icon: ChartBarIcon,
-    gradient: 'from-orange-500 to-red-500',
-    description: 'Performance insights'
-  },
-  { 
-    name: 'Comments', 
-    href: '/comments', 
-    icon: ChatBubbleLeftRightIcon,
-    gradient: 'from-teal-500 to-blue-500',
-    description: 'Community engagement'
-  },
-  { 
-    name: 'Subtitles', 
-    href: '/subtitles', 
-    icon: LanguageIcon,
-    gradient: 'from-indigo-500 to-purple-500',
-    description: 'Accessibility & translation'
-  },
-  { 
-    name: 'Monetization', 
-    href: '/monetization', 
-    icon: CurrencyDollarIcon,
-    gradient: 'from-yellow-500 to-orange-500',
-    description: 'Earnings & revenue'
-  },
-  { 
-    name: 'Customization', 
-    href: '/customization', 
-    icon: SwatchIcon,
-    gradient: 'from-pink-500 to-rose-500',
-    description: 'Brand & appearance'
-  },
-  { 
-    name: 'Audio Library', 
-    href: '/audio-library', 
-    icon: MusicalNoteIcon,
-    gradient: 'from-violet-500 to-purple-500',
-    description: 'Music & sound effects'
-  },
-  { 
-    name: 'Settings', 
-    href: '/settings', 
-    icon: AdjustmentsVerticalIcon,
-    gradient: 'from-gray-500 to-gray-600',
-    description: 'Account & preferences'
-  },
-]
+  { name: "Dashboard", href: "/", icon: HomeIcon },
+  { name: "Content", href: "/content", icon: PlayIcon },
+  { name: "Analytics", href: "/analytics", icon: ChartBarIcon },
+  { name: "Comments", href: "/comments", icon: ChatBubbleLeftRightIcon },
+  { name: "Revenue", href: "/revenue", icon: CurrencyDollarIcon },
+  { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
+];
 
-export default function StudioLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
-  const [timeOfDay, setTimeOfDay] = useState('')
-  const pathname = usePathname()
-  const navRef = useRef<HTMLDivElement>(null)
-  const controls = useAnimationControls()
-
-  useEffect(() => {
-    const hour = new Date().getHours()
-    if (hour < 12) setTimeOfDay('morning')
-    else if (hour < 17) setTimeOfDay('afternoon')
-    else setTimeOfDay('evening')
-  }, [])
-
-  // Floating animation for logo
-  const floatingAnimation = {
-    y: [0, -8, 0],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
-  }
-
-  // Organic blob background patterns
-  const blobVariants = {
-    animate: {
-      scale: [1, 1.1, 1],
-      rotate: [0, 5, 0],
-      transition: {
-        duration: 8,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    }
-  }
+export default function StudioLayout({ children }: { children: React.ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950 text-white overflow-hidden font-afacad relative">
-      {/* Organic Background Elements */}
-      <motion.div 
-        variants={blobVariants}
-        animate="animate"
-        className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-xl"
-      />
-      <motion.div 
-        variants={blobVariants}
-        animate="animate"
-        style={{ animationDelay: '2s' }}
-        className="absolute bottom-20 right-20 w-24 h-24 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-full blur-xl"
-      />
-      
+    <div className="flex h-screen bg-slate-900">
       {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ width: sidebarOpen ? 280 : 80 }}
-        transition={{ 
-          duration: 0.4, 
-          ease: [0.23, 1, 0.32, 1] // Custom spring curve
-        }}
-        className="relative flex flex-col backdrop-blur-xl bg-white/5 border-r border-white/10"
-        style={{
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-        }}
-      >
-        {/* Glassmorphism overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-        
-        {/* Logo/Brand */}
-        <div className="relative h-20 px-6 flex items-center border-b border-white/10">
-          <div className="flex items-center gap-4">
-            <motion.div 
-              animate={floatingAnimation}
-              className="relative"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center shadow-2xl">
-                <motion.span 
-                  className="text-lg font-bold text-white"
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  F
-                </motion.span>
-              </div>
-              {/* Shine effect */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
-            </motion.div>
-            
-            <AnimatePresence>
-              {sidebarOpen && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                >
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-                    Fabl Studio
-                  </h1>
-                  <p className="text-sm text-white/60 font-medium">
-                    Good {timeOfDay}, creator ✨
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          
-          {/* Toggle Button */}
-          <motion.button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="ml-auto p-2 rounded-xl hover:bg-white/10 transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {sidebarOpen ? (
-              <XMarkIcon className="w-5 h-5 text-white/70" />
-            ) : (
-              <Bars3Icon className="w-5 h-5 text-white/70" />
-            )}
-          </motion.button>
-        </div>
-
-        {/* Quick Stats (Only when expanded) */}
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="px-6 py-4 border-b border-white/10"
-          >
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-3 border border-green-500/30">
-                <p className="text-xs text-green-300 font-medium">Views Today</p>
-                <p className="text-lg font-bold text-white">2.4K</p>
-              </div>
-              <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm rounded-xl p-3 border border-blue-500/30">
-                <p className="text-xs text-blue-300 font-medium">Revenue</p>
-                <p className="text-lg font-bold text-white">$89</p>
-              </div>
-            </div>
-          </motion.div>
+      <aside
+        className={cn(
+          "bg-slate-900 border-r border-slate-800 transition-all duration-200",
+          sidebarOpen ? "w-64" : "w-16"
         )}
-
-        {/* Navigation */}
-        <nav className="flex-1 py-6 overflow-y-auto">
-          <div ref={navRef} className="space-y-2 px-4">
-            {navigationItems.map((item, index) => {
-              const isActive = pathname === item.href
-              const isHovered = hoveredItem === item.name
-              
-              return (
-                <motion.div
-                  key={item.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ 
-                    delay: index * 0.1,
-                    type: "spring",
-                    stiffness: 100,
-                    damping: 15
-                  }}
-                >
-                  <Link
-                    href={item.href}
-                    className="block group"
-                    onMouseEnter={() => setHoveredItem(item.name)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                  >
-                    <motion.div
-                      className={`
-                        relative flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300
-                        ${isActive
-                          ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-500/50 shadow-lg shadow-purple-500/25'
-                          : 'hover:bg-white/10 hover:border-white/20 border border-transparent'
-                        }
-                      `}
-                      whileHover={{ scale: 1.02, x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {/* Gradient background for active state */}
-                      {isActive && (
-                        <motion.div
-                          layoutId="activeTab"
-                          className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl"
-                          initial={false}
-                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                        />
-                      )}
-                      
-                      {/* Icon with gradient */}
-                      <motion.div
-                        className={`
-                          relative z-10 p-2 rounded-xl
-                          ${isActive || isHovered 
-                            ? `bg-gradient-to-br ${item.gradient}` 
-                            : 'bg-white/10'
-                          }
-                        `}
-                        animate={{
-                          rotate: isHovered ? [0, -3, 3, 0] : 0,
-                        }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <item.icon className="w-5 h-5 text-white" />
-                      </motion.div>
-                      
-                      <AnimatePresence>
-                        {sidebarOpen && (
-                          <motion.div
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className="flex-1 relative z-10"
-                          >
-                            <p className={`
-                              text-sm font-semibold transition-colors
-                              ${isActive ? 'text-white' : 'text-white/80 group-hover:text-white'}
-                            `}>
-                              {item.name}
-                            </p>
-                            <p className="text-xs text-white/50 font-medium">
-                              {item.description}
-                            </p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                      
-                      {/* Active indicator */}
-                      {isActive && sidebarOpen && (
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="w-2 h-2 bg-white rounded-full relative z-10"
-                        />
-                      )}
-                    </motion.div>
-                  </Link>
-                </motion.div>
-              )
-            })}
-          </div>
-        </nav>
-
-        {/* Upload Button */}
-        <div className="px-4 pb-6">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Link
-              href="/upload"
-              className="relative overflow-hidden flex items-center justify-center gap-3 w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-2xl text-sm font-bold transition-all duration-300 shadow-xl shadow-purple-500/25"
-            >
-              {/* Animated background */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-500 opacity-0 hover:opacity-100 transition-opacity duration-300"
-                animate={{
-                  backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              />
-              
-              <CloudArrowUpIcon className="w-5 h-5 relative z-10" />
-              {sidebarOpen && (
-                <span className="relative z-10">Create Content</span>
-              )}
-              
-              {/* Shine effect */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-                animate={{
-                  x: ['-100%', '200%'],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  repeatDelay: 3
-                }}
-              />
-            </Link>
-          </motion.div>
-        </div>
-        
-        {/* Channel Info */}
-        <div className="px-4 py-4 border-t border-white/10">
-          <motion.div 
-            className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
-                <span className="text-sm font-bold text-white">A</span>
+      >
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="h-16 flex items-center px-4 border-b border-slate-800">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="text-2xl font-bold">
+                <span className="text-white">studio</span>
+                <span className="text-violet-500">.</span>
               </div>
-              {/* Online indicator */}
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-950" />
-            </div>
-            
-            <AnimatePresence>
+            </Link>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 py-4">
+            <ul className="space-y-1 px-3">
+              {navigationItems.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-slate-800 text-white"
+                          : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                      )}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      {sidebarOpen && <span>{item.name}</span>}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* Upload Button */}
+          <div className="p-4 border-t border-slate-800">
+            <Link href="/upload">
+              <button className="w-full bg-violet-600 hover:bg-violet-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <ArrowUpTrayIcon className="w-4 h-4" />
+                {sidebarOpen && <span>Upload</span>}
+              </button>
+            </Link>
+          </div>
+
+          {/* Profile Section */}
+          <div className="p-4 border-t border-slate-800">
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="w-full flex items-center gap-3 hover:bg-slate-800/50 p-2 rounded-lg transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                <span className="text-sm font-medium text-white">A</span>
+              </div>
               {sidebarOpen && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex-1 min-w-0"
-                >
-                  <p className="text-sm font-semibold text-white truncate">Alex Creator</p>
-                  <p className="text-xs text-white/60 truncate">@alexcreates • 142K followers</p>
-                </motion.div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-white">Alex Creator</p>
+                  <p className="text-xs text-slate-400">@alexcreates</p>
+                </div>
               )}
-            </AnimatePresence>
-          </motion.div>
+            </button>
+
+            {/* Profile Dropdown */}
+            {profileOpen && sidebarOpen && (
+              <div className="absolute bottom-20 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50">
+                <Link href="/profile" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">
+                  <UserIcon className="inline w-4 h-4 mr-2" />
+                  Profile
+                </Link>
+                <Link href="/help" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">
+                  <QuestionMarkCircleIcon className="inline w-4 h-4 mr-2" />
+                  Help
+                </Link>
+                <button className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white border-t border-slate-700">
+                  <ArrowRightOnRectangleIcon className="inline w-4 h-4 mr-2" />
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto relative">
-        {/* Top bar with glassmorphism */}
-        <div className="sticky top-0 z-40 backdrop-blur-xl bg-white/5 border-b border-white/10">
-          <div className="flex items-center justify-between px-8 py-4">
-            <div className="flex items-center gap-4">
-              <motion.div
-                className="relative"
-                whileHover={{ scale: 1.05 }}
-              >
-                <input
-                  type="text"
-                  placeholder="Search your content..."
-                  className="w-80 px-4 py-2 pl-10 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:border-purple-500/50 focus:bg-white/15 transition-all"
-                />
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
-              </motion.div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <motion.button
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <BellIcon className="w-5 h-5 text-white/70" />
-              </motion.button>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Bar */}
+        <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-slate-400 hover:text-white"
+            >
+              <Bars3Icon className="w-5 h-5" />
+            </button>
+
+            {/* Search */}
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search your content..."
+                className="w-96 pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              />
             </div>
           </div>
-        </div>
-        
-        {/* Content area */}
-        <div className="relative z-10">
+
+          {/* Right side */}
+          <div className="flex items-center gap-4">
+            <button className="text-slate-400 hover:text-white relative">
+              <BellIcon className="w-5 h-5" />
+              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto bg-slate-950">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
-  )
+  );
 }
