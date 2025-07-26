@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import StudioLayoutEnhanced from "@/components/StudioLayoutEnhanced";
+import StudioLayout from "@/components/StudioLayout";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,10 +24,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} font-inter antialiased bg-[#FAFAF8] text-black min-h-screen`}
+        className={`${inter.variable} font-inter antialiased bg-studio-background text-white min-h-screen`}
         suppressHydrationWarning
       >
-        <StudioLayoutEnhanced>{children}</StudioLayoutEnhanced>
+        <StudioLayout>{children}</StudioLayout>
       </body>
     </html>
   );
