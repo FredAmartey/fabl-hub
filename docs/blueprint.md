@@ -1,8 +1,8 @@
-# Fabl: System Architecture
+# Fabl: Technical Blueprint
 
 ## Overview
 
-This document defines the core technical architecture for **Fabl**, a platform for AI-generated video content. The system supports user-uploaded AI-generated videos, featuring user accounts, channels, likes, comments, subscriptions, and a content recommendation engine. The architecture prioritizes scalability, modularity, security, and a clean codebase with best practices.
+This document serves as the original technical blueprint for **Fabl**, outlining the complete system architecture for a platform dedicated to AI-generated video content. While the current implementation consists of two separate Next.js applications (Hub and Studio), this blueprint describes the full backend infrastructure, services, and integrations required to build a production-ready platform supporting user-uploaded AI videos, social features, content moderation, and personalized recommendations.
 
 ## Goals
 
