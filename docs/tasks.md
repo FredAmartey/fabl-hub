@@ -8,42 +8,66 @@ This document provides an incredibly granular, step-by-step plan to build the Fa
 
 ## 📋 Project Context
 
-This task breakdown is designed for an **existing Vite + React + TailwindCSS frontend** with substantial UI components already built. Instead of creating a new monorepo structure, we'll:
+Fabl is now architected as a **monorepo with two separate Next.js applications**:
 
-- **Add a `/api` backend folder** to the existing project structure
-- **Enhance existing UI components** (Header, Sidebar, VideoCard, VideoGrid, etc.) with real data
-- **Connect existing page components** (HomePage, UploadPage, VideoPage, etc.) to the backend
-- **Leverage existing styling** and component architecture
+- **Hub App** (`/apps/hub`): The main video platform for viewers (runs on port 3000)
+- **Studio App** (`/apps/studio`): Creator dashboard for content management (runs on port 3001)
 
-**Existing Components to Enhance:**
+This architecture provides complete separation of concerns between viewing and content creation.
 
-- ✅ Header, Sidebar, Button, VideoCard, VideoGrid
-- ✅ HomePage, VideoPage, UploadPage, ProfilePage, and 6 other page components
-- ✅ TailwindCSS configuration and styling
-- ✅ Vite build system
+**Current Status:**
 
-## Phase 1: Project Foundation
+- ✅ Monorepo structure established
+- ✅ Two separate Next.js applications created
+- ✅ Cross-app navigation implemented (Upload button → Studio)
+- ✅ Environment-based URL configuration
+- ✅ TailwindCSS and component structure in place
 
-### 1.1 Project Structure Setup
+**Key Architectural Decisions:**
 
-- **Task 1.1.1**: Create backend API structure within existing project
+- Complete application separation (no shared routing)
+- Single Sign-On (SSO) between applications
+- Environment variables for cross-app URLs
+- Seamless upload flow (Hub → Studio)
 
-  - Start: Existing Vite React frontend project with components and pages
-  - End: `/api` folder created with basic structure for backend
-  - Test: Backend folder exists alongside existing frontend structure
+## Phase 1: Authentication Foundation
 
-- **Task 1.1.2**: Update package.json for full-stack development
-  - Start: Existing frontend package.json and dependencies
-  - End: Scripts added for running both frontend (port 5173) and backend (port 3001) concurrently
-  - Test: `npm run dev` starts both frontend and backend without conflicts
+### 1.1 Authentication Service Setup
+
+- **Task 1.1.1**: Create shared authentication service
+
+  - Start: Two separate Next.js apps (Hub and Studio)
+  - End: Shared authentication service accessible by both apps
+  - Test: Authentication tokens can be validated across both applications
+
+- **Task 1.1.2**: Implement Single Sign-On (SSO) flow
+  - Start: Authentication service exists
+  - End: Users can sign in on Hub and access Studio without re-authentication
+  - Test: Signing in on one app provides access to the other
+
+- **Task 1.1.3**: Update Hub Header for authentication states
+  - Start: SSO flow implemented
+  - End: Header shows Sign In when unauthenticated, Upload/Notifications/Profile when authenticated
+  - Test: Header correctly reflects authentication state
+
+- **Task 1.1.4**: Implement Upload button authentication check
+  - Start: Header authentication states working
+  - End: Upload button redirects to Studio when authenticated, shows sign-in modal when not
+  - Test: Click flow works correctly based on auth state
 
 ### 1.2 Database Setup
 
-- **Task 1.2.1**: Initialize Prisma in `/api/prisma`
+- **Task 1.2.1**: Create shared database structure
 
-  - Start: `/api` folder exists
-  - End: Prisma initialized in backend with basic config
-  - Test: `npx prisma --version` works in api folder
+  - Start: Authentication service exists
+  - End: Shared database accessible by both Hub and Studio backend services
+  - Test: Both applications can connect to the same database
+
+- **Task 1.2.2**: Initialize Prisma for both applications
+
+  - Start: Shared database exists
+  - End: Prisma configured in both Hub and Studio with shared schema
+  - Test: `npx prisma --version` works in both app directories
 
 - **Task 1.2.2**: Create Users table schema
 
@@ -249,51 +273,51 @@ This task breakdown is designed for an **existing Vite + React + TailwindCSS fro
   - End: Video owners can delete their videos
   - Test: Video deleted from DB, Mux asset deletion queued
 
-## Phase 5: Frontend Integration & Enhancement
+## Phase 5: Hub App Development
 
-### 5.1 Vite Development Setup
+### 5.1 Hub Authentication Integration
 
-- **Task 5.1.1**: Verify and update existing Vite configuration
+- **Task 5.1.1**: Integrate authentication provider in Hub app
 
-  - Start: Existing Vite React app with TailwindCSS configured
-  - End: Vite dev server confirmed running on port 5173, proxy to backend API added
-  - Test: `npm run dev` starts frontend on 5173, can proxy requests to localhost:3001
+  - Start: Hub Next.js app structure exists
+  - End: Authentication provider configured in Hub app
+  - Test: Authentication context available throughout Hub app
 
-- **Task 5.1.2**: Install and configure Clerk frontend SDK
+- **Task 5.1.2**: Create sign-in modal component
 
-  - Start: Existing React app structure
-  - End: Clerk authentication components and providers added
-  - Test: Clerk provider wraps app, authentication components importable
+  - Start: Authentication provider integrated
+  - End: Modal appears when unauthenticated user clicks Upload
+  - Test: Sign-in modal shows and functions correctly
 
-- **Task 5.1.3**: Create API client utility
+- **Task 5.1.3**: Update Header component with auth states
 
-  - Start: Clerk SDK installed
-  - End: `/src/lib/api.ts` utility for authenticated API calls
-  - Test: API client includes proper authorization headers from Clerk
+  - Start: Sign-in modal exists
+  - End: Header shows correct buttons based on authentication
+  - Test: Header dynamically updates when user signs in/out
 
-- **Task 5.1.4**: Add React Router for navigation
-  - Start: API client exists
-  - End: React Router configured with routes for existing page components
-  - Test: Navigation between pages works, URLs update correctly
+- **Task 5.1.4**: Implement authenticated navigation to Studio
+  - Start: Header auth states working
+  - End: Upload button redirects to Studio with auth token
+  - Test: Seamless redirect to Studio upload page when authenticated
 
-### 5.2 Enhance Existing Layout Components
+### 5.2 Hub Core Features
 
-- **Task 5.2.1**: Update existing Header component with authentication
+- **Task 5.2.1**: Implement video browsing on homepage
 
-  - Start: Existing Header component in `/src/components/Header.tsx`
-  - End: Header includes user authentication state and sign-in/sign-out buttons
-  - Test: Header shows different UI for authenticated vs unauthenticated users
+  - Start: Hub app with authentication
+  - End: Homepage displays video grid with real data
+  - Test: Videos load and display correctly
 
-- **Task 5.2.2**: Update existing Sidebar component with dynamic navigation
+- **Task 5.2.2**: Create video player page
 
-  - Start: Existing Sidebar component
-  - End: Sidebar navigation items reflect user authentication status
-  - Test: Authenticated users see additional navigation options
+  - Start: Video browsing works
+  - End: Individual video pages with player and metadata
+  - Test: Videos play correctly with comments/likes visible
 
-- **Task 5.2.3**: Create main Layout wrapper using existing components
-  - Start: Updated Header and Sidebar components
-  - End: Layout component that uses existing Header/Sidebar with routing
-  - Test: All pages render within consistent layout structure
+- **Task 5.2.3**: Implement search functionality
+  - Start: Video player works
+  - End: Search bar returns relevant video results
+  - Test: Search queries return appropriate videos
 
 ### 5.3 Authentication Integration
 
@@ -314,82 +338,82 @@ This task breakdown is designed for an **existing Vite + React + TailwindCSS fro
   - End: Existing page components (UploadPage, ProfilePage) use authentication state
   - Test: Pages display appropriate content based on authentication status
 
-## Phase 6: Video Upload & Display Implementation
+## Phase 6: Studio App Development
 
-### 6.1 Enhance Existing Upload Page
+### 6.1 Studio Upload Implementation
 
-- **Task 6.1.1**: Update existing UploadPage component with API integration
+- **Task 6.1.1**: Create Studio upload page
 
-  - Start: Existing UploadPage component in `/src/components/pages/UploadPage.tsx`
-  - End: UploadPage connects to backend upload URL endpoint
-  - Test: Upload page makes API calls to get Mux upload URLs
+  - Start: Studio app with authentication
+  - End: Upload page accessible at `/upload` in Studio app
+  - Test: Authenticated users can access upload page
 
-- **Task 6.1.2**: Add file input validation to UploadPage
+- **Task 6.1.2**: Implement video file selection
 
-  - Start: UploadPage has API integration
-  - End: File input accepts only video files with size/type validation
+  - Start: Upload page exists
+  - End: File input accepts video files with validation
   - Test: Non-video files rejected, validation messages shown
 
-- **Task 6.1.3**: Integrate Mux direct upload in UploadPage
+- **Task 6.1.3**: Integrate Mux direct upload
 
   - Start: File validation works
-  - End: Selected files upload directly to Mux with progress tracking
+  - End: Selected files upload to Mux with progress tracking
   - Test: Upload progress shown, completion triggers next step
 
-- **Task 6.1.4**: Add video metadata form to UploadPage
+- **Task 6.1.4**: Create video metadata form
 
   - Start: Mux upload works
-  - End: Form for title, description, channel selection after upload
-  - Test: Form validates required fields, submits to video creation API
+  - End: Form for title, description, thumbnail after upload
+  - Test: Form validates required fields correctly
 
-- **Task 6.1.5**: Connect UploadPage to video creation API
+- **Task 6.1.5**: Connect to video creation API
   - Start: Metadata form works
-  - End: Successful uploads create video records and redirect user
-  - Test: Video appears in user's content after upload completion
+  - End: Successful uploads create video records
+  - Test: Video appears in creator's content dashboard
 
-### 6.2 Enhance Existing Video Display Components
+### 6.2 Studio Creator Dashboard
 
-- **Task 6.2.1**: Update existing VideoCard component with real data
+- **Task 6.2.1**: Create content management dashboard
 
-  - Start: Existing VideoCard component in `/src/components/VideoCard.tsx`
-  - End: VideoCard displays real video data from API calls
-  - Test: VideoCard renders with actual video thumbnails, titles, metadata
+  - Start: Upload functionality complete
+  - End: Dashboard shows creator's uploaded videos
+  - Test: Videos listed with views, likes, comments count
 
-- **Task 6.2.2**: Update existing VideoGrid component with API integration
+- **Task 6.2.2**: Implement video editing functionality
 
-  - Start: Updated VideoCard exists, existing VideoGrid component
-  - End: VideoGrid fetches and displays videos from backend API
-  - Test: Grid loads videos from API, handles loading and error states
+  - Start: Dashboard displays videos
+  - End: Creators can edit video title, description, thumbnail
+  - Test: Edits save correctly and reflect in Hub app
 
-- **Task 6.2.3**: Update existing VideoPage with Mux player
-  - Start: VideoGrid works, existing VideoPage component
-  - End: VideoPage displays Mux video player and video metadata
-  - Test: Videos play correctly, metadata displays properly
+- **Task 6.2.3**: Add analytics dashboard
+  - Start: Video editing works
+  - End: Basic analytics showing views, engagement metrics
+  - Test: Analytics data updates correctly
 
-### 6.3 Enhance Existing Page Components
+### 6.3 Cross-App Integration
 
-- **Task 6.3.1**: Update existing HomePage with real video data
+- **Task 6.3.1**: Ensure authentication persistence
 
-  - Start: Video display components work, existing HomePage component
-  - End: HomePage fetches and displays recent videos using VideoGrid
-  - Test: Homepage loads real videos from API with proper pagination
+  - Start: Both apps have authentication
+  - End: Signing in on Hub persists to Studio and vice versa
+  - Test: SSO flow works seamlessly between apps
 
-- **Task 6.3.2**: Create CategoryPage functionality
+- **Task 6.3.2**: Implement shared user profile
 
-  - Start: HomePage works, existing CategoryPage component
-  - End: CategoryPage shows videos filtered by category/channel
-  - Test: Category pages show correct filtered video content
+  - Start: SSO working
+  - End: User profile changes in one app reflect in the other
+  - Test: Profile updates synchronize across apps
 
-- **Task 6.3.3**: Update existing ProfilePage with user's content
+- **Task 6.3.3**: Create navigation between apps
 
-  - Start: CategoryPage works, existing ProfilePage component
-  - End: ProfilePage shows user's channels and uploaded videos
-  - Test: Profile page displays user's content correctly with proper authentication
+  - Start: Shared profile works
+  - End: Clear navigation paths between Hub and Studio
+  - Test: Users can easily switch between viewing and creating
 
-- **Task 6.3.4**: Connect remaining page components to backend
-  - Start: Core pages working
-  - End: TrendingPage, SubscriptionsPage, FavoritesPage, WatchLaterPage, NotificationsPage connected to respective APIs
-  - Test: All existing page components display appropriate data from backend
+- **Task 6.3.4**: Implement notification sync
+  - Start: Navigation works
+  - End: Notifications appear in both apps appropriately
+  - Test: Creator notifications in Studio, viewer notifications in Hub
 
 ## Phase 7: Social Features
 
@@ -647,11 +671,15 @@ For every task, verify completion using these methods:
 
 The MVP is complete when:
 
-- Users can sign up, create channels, and upload videos
+- Users can sign up on either Hub or Studio with SSO between apps
+- Authenticated users see Upload button, unauthenticated see Sign In
+- Upload button seamlessly redirects authenticated users to Studio
+- Users can create channels and upload videos in Studio
+- Videos uploaded in Studio appear in Hub for viewing
 - Videos are automatically moderated for content and AI ratio
 - Basic social features (likes, comments, subscriptions) work
 - Trending and recommendation systems provide relevant content
-- The application is production-ready with proper error handling and monitoring
+- Both applications are production-ready with proper error handling
 
 Each task should be completed in isolation and thoroughly tested before moving to the next task.
 

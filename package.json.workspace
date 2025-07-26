@@ -1,0 +1,19 @@
+{
+  "name": "fabl-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/main",
+    "apps/studio"
+  ],
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:*",
+    "dev:main": "cd . && npm run dev",
+    "dev:studio": "cd apps/studio && npm run dev",
+    "build": "npm-run-all build:*",
+    "build:main": "cd . && npm run build",
+    "build:studio": "cd apps/studio && npm run build"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  }
+}

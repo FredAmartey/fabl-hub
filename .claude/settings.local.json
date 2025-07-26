@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm i:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(true)",
+      "Bash(rm:*)",
+      "Bash(ls:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run build:*)",
+      "Bash(npx:*)",
+      "Bash(/model opus-4)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run dev:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cp:*)",
+      "Bash(sed:*)",
+      "Bash(echo:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__claudepoint__list_checkpoints",
+      "mcp__claudepoint__get_changelog",
+      "mcp__claudepoint__setup_claudepoint",
+      "Bash(chmod:*)",
+      "Bash(kill:*)",
+      "mcp__claudepoint__create_checkpoint",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

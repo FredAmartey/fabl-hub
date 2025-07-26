@@ -29,7 +29,7 @@ This document defines the core technical architecture for **Fabl**, a platform f
 - **Authentication**: Clerk (JWT-based)
 - **Database**: PostgreSQL (via Prisma ORM)
 - **Video Infra**: Mux (upload, storage, transcoding, delivery)
-- **Moderation**: Hive API or AWS Rekognition (NSFW scanning)
+- **Moderation**: Hive API (NSFW scanning)
 - **Queue**: BullMQ (Redis-based job processing)
 - **Recommendation Engine**: Redis, vector search, optional ML model in Python microservice
 - **CI/CD**: GitHub Actions
@@ -39,8 +39,6 @@ This document defines the core technical architecture for **Fabl**, a platform f
 
 - **REST (MVP)**: Fast to implement, simple endpoints, clear request/response structure
 - **GraphQL (Future)**: Flexible data fetching, fewer round-trips, strong type-safety
-
-_Recommendation_: Start with REST to reduce complexity. Introduce a GraphQL gateway once client data requirements grow and efficiency gains outweigh added setup.
 
 ## System Components
 
