@@ -131,24 +131,24 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
         {/* Profile */}
         <div className="border-t border-gray-800/50 px-4 pt-6 pb-4">
-          <button className="w-full flex items-center gap-3">
+          <div className="w-full flex items-center gap-3">
             <div className="relative flex-shrink-0">
-              <div className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
                 <Image
                   src="/fabl.png"
                   alt="Fabl Logo"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover rounded-2xl"
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover rounded-xl"
                 />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0a0f]" />
+              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0a0a0f]" />
             </div>
             <div className="flex-1 text-left">
-              <p className="text-base font-semibold text-white">Your Channel</p>
-              <p className="text-sm text-gray-500">All systems operational</p>
+              <p className="text-sm font-semibold text-white"> Studio</p>
+              <p className="text-xs text-gray-500">All systems operational</p>
             </div>
-          </button>
+          </div>
         </div>
       </aside>
 
