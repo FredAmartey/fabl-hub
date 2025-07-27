@@ -10,6 +10,7 @@ import {
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
+  BellIcon,
   FolderIcon,
   LanguageIcon,
   PaintBrushIcon,
