@@ -10,7 +10,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         inter: ["var(--font-inter)", "system-ui", "sans-serif"],
-        afacad: ["Afacad", "sans-serif"],
+        afacad: ["var(--font-afacad)", "Afacad", "sans-serif"],
       },
       colors: {
         studio: {

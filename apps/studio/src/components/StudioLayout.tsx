@@ -10,161 +10,146 @@ import {
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
-  Cog6ToothIcon,
-  Bars3Icon,
-  ArrowUpTrayIcon,
   BellIcon,
-  MagnifyingGlassIcon,
-  UserIcon,
-  ArrowRightOnRectangleIcon,
-  QuestionMarkCircleIcon,
+  FolderIcon,
+  LanguageIcon,
+  PaintBrushIcon,
+  MusicalNoteIcon,
+  SparklesIcon,
+  CloudArrowUpIcon,
+  UserCircleIcon,
+  CogIcon,
 } from "@heroicons/react/24/outline";
 
 const navigationItems = [
   { name: "Dashboard", href: "/", icon: HomeIcon },
   { name: "Content", href: "/content", icon: PlayIcon },
+  { name: "Playlists", href: "/playlists", icon: FolderIcon },
   { name: "Analytics", href: "/analytics", icon: ChartBarIcon },
   { name: "Comments", href: "/comments", icon: ChatBubbleLeftRightIcon },
-  { name: "Revenue", href: "/revenue", icon: CurrencyDollarIcon },
-  { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
+  { name: "Subtitles", href: "/subtitles", icon: LanguageIcon },
+  { name: "Monetization", href: "/monetization", icon: CurrencyDollarIcon },
+  { name: "Customization", href: "/customization", icon: PaintBrushIcon },
+  { name: "Audio Library", href: "/audio", icon: MusicalNoteIcon },
 ];
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
 
   return (
-    <div className="flex h-screen bg-slate-900">
+    <div className="flex h-screen bg-[#0a0a0f]">
       {/* Sidebar */}
-      <aside
-        className={cn(
-          "bg-slate-900 border-r border-slate-800 transition-all duration-200",
-          sidebarOpen ? "w-64" : "w-16"
-        )}
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="h-16 flex items-center px-4 border-b border-slate-800">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="text-2xl font-bold">
-                <span className="text-white">studio</span>
-                <span className="text-violet-500">.</span>
-              </div>
-            </Link>
-          </div>
+      <aside className="w-[280px] bg-gradient-to-b from-[#0a0a0f] via-[#090514] to-[#130a22] border-r border-gray-800/30 flex flex-col">
+        {/* Header */}
+        <div className="h-16 border-b border-gray-800/50 flex items-center px-6">
+          <Link href="/" className="flex items-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center shadow-lg mr-3">
+              <SparklesIcon className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="text-2xl font-bold text-gradient">fabl </span>
+              <span className="text-2xl font-bold text-white"> Studio</span>
+              <div className="text-xs text-gray-400">Creator Hub</div>
+            </div>
+          </Link>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 py-4">
-            <ul className="space-y-1 px-3">
-              {navigationItems.map((item) => {
-                const isActive = pathname === item.href;
-                const Icon = item.icon;
+        {/* Navigation */}
+        <nav className="flex-1 px-4 pt-8 pb-4 overflow-y-auto">
+          <ul className="space-y-2">
+            {navigationItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
 
-                return (
-                  <li key={item.name}>
-                    <Link
-                      href={item.href}
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200",
+                      isActive
+                        ? "bg-white/15 text-white shadow-md border border-gray-400/40"
+                        : "text-gray-400 hover:text-white hover:bg-gray-800/30"
+                    )}
+                  >
+                    <Icon
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-slate-800 text-white"
-                          : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                        "w-5 h-5 flex-shrink-0",
+                        isActive ? "text-white" : "text-gray-400"
                       )}
-                    >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
-                      {sidebarOpen && <span>{item.name}</span>}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+                    />
+                    <span className="flex-1">{item.name}</span>
+                    {isActive && (
+                      <div className="w-2 h-2 rounded-full bg-gradient-to-br from-pink-300 to-purple-500" />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-          {/* Upload Button */}
-          <div className="p-4 border-t border-slate-800">
-            <Link href="/upload">
-              <button className="w-full bg-violet-600 hover:bg-violet-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
-                <ArrowUpTrayIcon className="w-4 h-4" />
-                {sidebarOpen && <span>Upload</span>}
-              </button>
-            </Link>
-          </div>
-
-          {/* Profile Section */}
-          <div className="p-4 border-t border-slate-800">
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="w-full flex items-center gap-3 hover:bg-slate-800/50 p-2 rounded-lg transition-colors"
-            >
-              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-                <span className="text-sm font-medium text-white">A</span>
-              </div>
-              {sidebarOpen && (
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-white">Alex Creator</p>
-                  <p className="text-xs text-slate-400">@alexcreates</p>
-                </div>
-              )}
+        {/* Upload and Notification */}
+        <div className="px-4 pb-4 flex gap-3">
+          <Link href="/upload" className="flex-1">
+            <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg">
+              <CloudArrowUpIcon className="w-5 h-5" />
+              <span className="text-sm">Upload</span>
             </button>
+          </Link>
+          <Link href="/settings">
+            <button
+              className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0",
+                pathname === "/settings"
+                  ? "bg-gray-800/70 text-white border border-gray-400/40"
+                  : "bg-gray-800/50 hover:bg-gray-800/70 text-gray-400 hover:text-white"
+              )}
+            >
+              <CogIcon className="w-5 h-5" />
+            </button>
+          </Link>
+        </div>
 
-            {/* Profile Dropdown */}
-            {profileOpen && sidebarOpen && (
-              <div className="absolute bottom-20 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50">
-                <Link href="/profile" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">
-                  <UserIcon className="inline w-4 h-4 mr-2" />
-                  Profile
-                </Link>
-                <Link href="/help" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">
-                  <QuestionMarkCircleIcon className="inline w-4 h-4 mr-2" />
-                  Help
-                </Link>
-                <button className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white border-t border-slate-700">
-                  <ArrowRightOnRectangleIcon className="inline w-4 h-4 mr-2" />
-                  Sign Out
-                </button>
+        {/* Profile */}
+        <div className="border-t border-gray-800/50 px-4 pt-6 pb-4">
+          <button className="w-full flex items-center gap-3">
+            <div className="relative flex-shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center">
+                <UserCircleIcon className="w-6 h-6 text-white" />
               </div>
-            )}
-          </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0a0f]" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-base font-semibold text-white">Your Channel</p>
+              <p className="text-sm text-gray-500">@yourchannel • 45.7K subs</p>
+            </div>
+          </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6">
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="h-16 border-b border-gray-800/50 bg-[#0a0a0f]/95 backdrop-blur-sm flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-slate-400 hover:text-white"
-            >
-              <Bars3Icon className="w-5 h-5" />
-            </button>
-
-            {/* Search */}
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search your content..."
-                className="w-96 pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-              />
-            </div>
+            <h1 className="text-xl font-semibold text-white">
+              {pathname === "/"
+                ? "Dashboard"
+                : pathname.slice(1).charAt(0).toUpperCase() + pathname.slice(2)}
+            </h1>
           </div>
 
-          {/* Right side */}
           <div className="flex items-center gap-4">
-            <button className="text-slate-400 hover:text-white relative">
+            <button className="relative p-2.5 rounded-xl hover:bg-gray-800/50 text-gray-400 hover:text-white transition-colors">
               <BellIcon className="w-5 h-5" />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full" />
             </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-950">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto bg-[#0a0a0f]">{children}</main>
       </div>
     </div>
   );

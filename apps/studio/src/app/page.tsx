@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   PlayIcon,
@@ -10,115 +9,108 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   VideoCameraIcon,
-  ChartBarIcon,
   PlusIcon,
   ArrowTrendingUpIcon,
+  HeartIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon } from "@heroicons/react/24/solid";
 
 export default function StudioDashboard() {
-  const [timeOfDay, setTimeOfDay] = useState("");
-
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setTimeOfDay("morning");
-    else if (hour < 17) setTimeOfDay("afternoon");
-    else setTimeOfDay("evening");
-  }, []);
-
   const stats = [
     {
       label: "Views",
       value: "1.2M",
       change: 12.5,
-      subtext: "Last 28 days",
+      period: "Last 28 days",
       icon: EyeIcon,
+      color: "text-blue-400",
     },
     {
       label: "Watch time",
-      value: "847h",
+      value: "847 hours",
       change: 8.3,
-      subtext: "Last 28 days",
+      period: "Last 28 days",
       icon: ClockIcon,
+      color: "text-purple-400",
     },
     {
       label: "Subscribers",
       value: "45.2K",
       change: 5.7,
-      subtext: "+2.5K this month",
+      period: "+2.5K this month",
       icon: UserGroupIcon,
+      color: "text-pink-400",
     },
     {
       label: "Revenue",
       value: "$2,840",
       change: 23.1,
-      subtext: "This month",
-      icon: ArrowTrendingUpIcon,
+      period: "This month",
+      icon: CurrencyDollarIcon,
+      color: "text-green-400",
     },
   ];
 
   const videos = [
     {
       id: 1,
-      title: "Building a Modern React App",
-      thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=300&h=200&auto=format&fit=crop",
-      views: 23456,
-      impressions: 145234,
-      ctr: 16.1,
+      title: "Building a Modern React App with AI Assistance",
+      thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=225&auto=format&fit=crop",
+      views: "23.4K",
+      likes: "1.2K",
+      comments: "89",
       avgViewDuration: "8:23",
       publishedDays: 2,
+      performance: "rising",
     },
     {
       id: 2,
-      title: "Next.js 14 Features Deep Dive",
-      thumbnail: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&auto=format&fit=crop",
-      views: 18732,
-      impressions: 98234,
-      ctr: 19.1,
+      title: "Next.js 14 Features: A Deep Dive into the Future",
+      thumbnail: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=225&auto=format&fit=crop",
+      views: "18.7K",
+      likes: "956",
+      comments: "67",
       avgViewDuration: "12:15",
       publishedDays: 5,
+      performance: "stable",
     },
     {
       id: 3,
-      title: "TypeScript Tips for Beginners",
-      thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&h=200&auto=format&fit=crop",
-      views: 31234,
-      impressions: 178234,
-      ctr: 17.5,
+      title: "TypeScript Tips for Beginners: Master the Basics",
+      thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=225&auto=format&fit=crop",
+      views: "31.2K",
+      likes: "1.8K",
+      comments: "124",
       avgViewDuration: "10:33",
       publishedDays: 7,
+      performance: "rising",
     },
   ];
 
-  const topPerformers = [
-    { title: "#javascript", type: "Tag", performance: "+40% views" },
-    { title: "Tutorial Series", type: "Playlist", performance: "+28% completion" },
-    { title: "8-10 PM EST", type: "Time", performance: "Peak viewing" },
-    { title: "North America", type: "Region", performance: "68% audience" },
-  ];
-
   return (
-    <div className="p-8">
-      {/* Header */}
+    <div className="p-8 bg-[#0a0a0f] min-h-screen">
+      {/* Channel Overview */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Good {timeOfDay}, Alex
-        </h1>
-        <p className="text-slate-400">
-          Here's how your channel is performing today
-        </p>
+        <h2 className="text-2xl font-semibold text-white mb-6">Channel analytics</h2>
+        <p className="text-gray-400 text-sm mb-1">Current subscriber count</p>
+        <div className="flex items-baseline gap-2 mb-6">
+          <span className="text-4xl font-bold text-white">45,273</span>
+          <span className="text-green-400 text-sm">+2,543 in last 28 days</span>
+        </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="bg-slate-800/50 border border-slate-700 rounded-lg p-6"
+            className="bg-gray-900/60 rounded-2xl p-6 hover:bg-gray-800/60 transition-colors"
           >
-            <div className="flex items-start justify-between mb-4">
-              <stat.icon className="w-5 h-5 text-slate-400" />
+            <div className="flex items-center justify-between mb-4">
+              <stat.icon className={`w-5 h-5 ${stat.color}`} />
               <div className={`flex items-center gap-1 text-sm ${
-                stat.change > 0 ? "text-green-500" : "text-red-500"
+                stat.change > 0 ? "text-green-400" : "text-red-400"
               }`}>
                 {stat.change > 0 ? (
                   <ArrowUpIcon className="w-3 h-3" />
@@ -128,145 +120,179 @@ export default function StudioDashboard() {
                 <span>{Math.abs(stat.change)}%</span>
               </div>
             </div>
-            <div className="mb-1">
-              <div className="text-2xl font-bold text-white">{stat.value}</div>
-              <div className="text-sm text-slate-400">{stat.label}</div>
-            </div>
-            <div className="text-xs text-slate-500">{stat.subtext}</div>
+            <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+            <div className="text-sm text-gray-400">{stat.label}</div>
+            <div className="text-xs text-gray-500 mt-1">{stat.period}</div>
           </div>
         ))}
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        {/* Upload */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <Link href="/upload" className="group">
-          <div className="bg-violet-600/10 border border-violet-600/30 rounded-lg p-6 hover:bg-violet-600/20 transition-colors cursor-pointer">
-            <div className="flex items-center justify-between mb-4">
-              <VideoCameraIcon className="w-8 h-8 text-violet-500" />
-              <PlusIcon className="w-5 h-5 text-violet-500 group-hover:rotate-90 transition-transform" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-1">Upload video</h3>
-            <p className="text-sm text-slate-400">Share your latest creation</p>
-          </div>
-        </Link>
-
-        {/* Analytics */}
-        <Link href="/analytics" className="group">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:bg-slate-800 transition-colors cursor-pointer">
-            <div className="flex items-center justify-between mb-4">
-              <ChartBarIcon className="w-8 h-8 text-slate-400" />
-              <ArrowUpIcon className="w-5 h-5 text-green-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-1">View analytics</h3>
-            <p className="text-sm text-slate-400">Deep dive into your data</p>
-          </div>
-        </Link>
-
-        {/* Go Live */}
-        <Link href="/live" className="group">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:bg-slate-800 transition-colors cursor-pointer">
-            <div className="flex items-center justify-between mb-4">
-              <div className="relative">
-                <PlayIcon className="w-8 h-8 text-slate-400" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+          <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl p-6 hover:from-pink-600 hover:to-purple-700 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">Upload Video</h3>
+                <p className="text-sm text-white/80">Share your content</p>
               </div>
-              <span className="text-xs text-red-500 font-medium">LIVE</span>
+              <VideoCameraIcon className="w-8 h-8 text-white/80" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-1">Go live</h3>
-            <p className="text-sm text-slate-400">Connect with your audience</p>
+          </div>
+        </Link>
+
+        <Link href="/go-live" className="group">
+          <div className="bg-gray-900/60 rounded-2xl p-6 hover:bg-gray-800/60 transition-colors">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">Go Live</h3>
+                <p className="text-sm text-gray-400">Start streaming</p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
+                <div className="w-3 h-3 bg-white rounded-full" />
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/create-post" className="group">
+          <div className="bg-gray-900/60 rounded-2xl p-6 hover:bg-gray-800/60 transition-colors">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">Create Post</h3>
+                <p className="text-sm text-gray-400">Engage community</p>
+              </div>
+              <PlusIcon className="w-8 h-8 text-gray-400" />
+            </div>
           </div>
         </Link>
       </div>
 
       {/* Content Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Videos */}
-        <div className="lg:col-span-2">
-          <h2 className="text-xl font-semibold text-white mb-4">Recent uploads</h2>
-          <div className="space-y-4">
-            {videos.map((video) => (
-              <div
-                key={video.id}
-                className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800/70 transition-colors"
-              >
-                <div className="flex gap-4">
-                  <img
-                    src={video.thumbnail}
-                    alt={video.title}
-                    className="w-32 h-20 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-white mb-2">{video.title}</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-slate-400">Views</span>
-                        <p className="text-white font-medium">{video.views.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">CTR</span>
-                        <p className="text-white font-medium">{video.ctr}%</p>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">Impressions</span>
-                        <p className="text-white font-medium">{video.impressions.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span className="text-slate-400">Avg view</span>
-                        <p className="text-white font-medium">{video.avgViewDuration}</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-2">
-                      Published {video.publishedDays} days ago
-                    </p>
-                  </div>
+      <div className="bg-gray-900/60 rounded-2xl p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-white">Latest video performance</h2>
+          <Link href="/content" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+            View all
+          </Link>
+        </div>
+
+        <div className="space-y-4">
+          {videos.map((video) => (
+            <div
+              key={video.id}
+              className="flex gap-4 p-4 rounded-xl hover:bg-gray-800/50 transition-colors cursor-pointer"
+            >
+              {/* Thumbnail */}
+              <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
+                  {video.avgViewDuration}
                 </div>
               </div>
-            ))}
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-white mb-2 line-clamp-1">
+                  {video.title}
+                </h3>
+                
+                <div className="flex items-center gap-6 text-sm">
+                  <div className="flex items-center gap-1">
+                    <EyeIcon className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-300">{video.views}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <HeartIcon className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-300">{video.likes}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ChatBubbleLeftRightIcon className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-300">{video.comments}</span>
+                  </div>
+                  <span className="text-gray-500">{video.publishedDays}d ago</span>
+                </div>
+              </div>
+
+              {/* Performance indicator */}
+              <div className="flex items-center">
+                {video.performance === 'rising' ? (
+                  <ArrowTrendingUpIcon className="w-5 h-5 text-green-400" />
+                ) : (
+                  <ArrowTrendingUpIcon className="w-5 h-5 text-gray-500" />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top videos */}
+        <div className="bg-gray-900/60 rounded-2xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Top videos</h3>
+          <div className="text-sm text-gray-400 mb-4">Last 48 hours</div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-gray-500">1</span>
+                <div>
+                  <p className="text-white font-medium">Building a Modern React App</p>
+                  <p className="text-sm text-gray-400">23.4K views</p>
+                </div>
+              </div>
+              <ArrowTrendingUpIcon className="w-5 h-5 text-green-400" />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-gray-500">2</span>
+                <div>
+                  <p className="text-white font-medium">TypeScript Tips for Beginners</p>
+                  <p className="text-sm text-gray-400">19.2K views</p>
+                </div>
+              </div>
+              <ArrowTrendingUpIcon className="w-5 h-5 text-green-400" />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-gray-500">3</span>
+                <div>
+                  <p className="text-white font-medium">Next.js 14 Features</p>
+                  <p className="text-sm text-gray-400">15.8K views</p>
+                </div>
+              </div>
+              <ArrowTrendingUpIcon className="w-5 h-5 text-gray-500" />
+            </div>
           </div>
         </div>
 
-        {/* Top Performers */}
-        <div>
-          <h2 className="text-xl font-semibold text-white mb-4">Top performers</h2>
-          <div className="space-y-3">
-            {topPerformers.map((item, index) => (
-              <div
-                key={index}
-                className="bg-slate-800/50 border border-slate-700 rounded-lg p-4"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-slate-500 uppercase">{item.type}</span>
-                  <span className="text-xs text-green-500 font-medium">{item.performance}</span>
-                </div>
-                <p className="text-white font-medium">{item.title}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Channel Health */}
-          <div className="mt-6 bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-            <h3 className="font-medium text-white mb-3">Channel health</h3>
-            <div className="space-y-3">
-              <div>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-slate-400">Engagement rate</span>
-                  <span className="text-white">8.2%</span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: "82%" }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-slate-400">Subscriber growth</span>
-                  <span className="text-white">5.7%</span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-2">
-                  <div className="bg-violet-500 h-2 rounded-full" style={{ width: "57%" }}></div>
-                </div>
+        {/* Realtime Activity */}
+        <div className="bg-gray-900/60 rounded-2xl p-6">
+          <h3 className="text-xl font-semibold text-white mb-4">Realtime</h3>
+          <div className="text-3xl font-bold text-white mb-2">284</div>
+          <div className="text-sm text-gray-400 mb-6">Watching now</div>
+          
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-gray-400">Top location</span>
+                <span className="text-white">United States</span>
               </div>
             </div>
+            <div>
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="text-gray-400">Top traffic source</span>
+                <span className="text-white">Browse features</span>
+              </div>
+            </div>
+            <Link href="/analytics" className="block text-center py-2 text-blue-400 hover:text-blue-300 transition-colors">
+              See more in Analytics
+            </Link>
           </div>
         </div>
       </div>
