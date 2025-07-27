@@ -1,392 +1,792 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { 
-  ChatBubbleLeftRightIcon,
+import { useState, useEffect } from "react";
+import {
+  ChatBubbleOvalLeftIcon,
+  HeartIcon,
+  FlagIcon,
+  CheckCircleIcon,
+  XCircleIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  HandThumbUpIcon,
-  HandThumbDownIcon,
-  HeartIcon,
-  ExclamationTriangleIcon,
-  CheckIcon,
-  XMarkIcon,
-  EllipsisHorizontalIcon,
-  UserIcon,
-  ClockIcon,
+  FireIcon,
+  StarIcon,
   EyeIcon,
-  FlagIcon
+  ArrowTrendingUpIcon,
+  SparklesIcon,
+  BoltIcon,
+  PaperAirplaneIcon,
+  GiftIcon,
+  CursorArrowRaysIcon,
+  ChartBarIcon,
+  LightBulbIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
-import { CustomSelect } from "@/components/ui/custom-select";
+import { HeartIcon as HeartSolidIcon, FireIcon as FireSolidIcon, StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
+
+const mockComments = [
+  {
+    id: 1,
+    author: "Sarah Chen",
+    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b500?w=40&h=40&fit=crop&crop=face",
+    comment: "This tutorial literally saved my project! The way you explained React hooks finally made it click for me. Thank you so much! 🔥",
+    video: "React Server Components Explained",
+    time: "2 hours ago",
+    likes: 124,
+    replies: 8,
+    isPinned: true,
+    isHearted: true,
+    sentiment: "positive",
+    trending: true,
+    isVerified: true,
+    isSubscriber: true,
+    aiInsight: "High-value feedback",
+    engagementScore: 95,
+    influence: "high",
+    location: "San Francisco, CA",
+    hasReplied: false
+  },
+  {
+    id: 2,
+    author: "Alex Rivera", 
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
+    comment: "Great content! Quick question - how would you handle authentication with this approach? Would love to see a follow-up video on this 💭",
+    video: "Building a Modern Web App",
+    time: "5 hours ago",
+    likes: 45,
+    replies: 3,
+    isPinned: false,
+    isHearted: false,
+    sentiment: "neutral",
+    trending: false,
+    isVerified: false,
+    isSubscriber: true,
+    aiInsight: "Content suggestion",
+    engagementScore: 78,
+    influence: "medium",
+    location: "New York, NY",
+    hasReplied: false
+  },
+  {
+    id: 3,
+    author: "Marcus Johnson",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
+    comment: "The audio quality could be better. Hard to hear some parts, especially around the 8:30 mark.",
+    video: "TypeScript Best Practices",
+    time: "1 day ago",
+    likes: 12,
+    replies: 1,
+    isPinned: false,
+    isHearted: false,
+    sentiment: "negative",
+    trending: false,
+    isVerified: false,
+    isSubscriber: false,
+    aiInsight: "Technical feedback",
+    engagementScore: 65,
+    influence: "low",
+    location: "London, UK",
+    hasReplied: false
+  },
+  {
+    id: 4,
+    author: "Emily Wong",
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face",
+    comment: "Can't wait for the next part! When are you uploading it? This series is absolutely amazing! ⚡️",
+    video: "AI Integration Tutorial - Part 1",
+    time: "3 days ago",
+    likes: 89,
+    replies: 5,
+    isPinned: false,
+    isHearted: true,
+    sentiment: "positive",
+    trending: true,
+    isVerified: true,
+    isSubscriber: true,
+    aiInsight: "Series enthusiasm",
+    engagementScore: 88,
+    influence: "high",
+    location: "Tokyo, Japan",
+    hasReplied: true
+  },
+  {
+    id: 5,
+    author: "David Kim",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face",
+    comment: "Mind blown! 🤯 Never thought about using hooks this way. Definitely trying this in my next project. Thanks for the inspo!",
+    video: "React Server Components Explained",
+    time: "6 hours ago",
+    likes: 76,
+    replies: 12,
+    isPinned: false,
+    isHearted: true,
+    sentiment: "positive",
+    trending: true,
+    isVerified: false,
+    isSubscriber: true,
+    aiInsight: "Implementation intent",
+    engagementScore: 92,
+    influence: "medium",
+    location: "Seoul, South Korea",
+    hasReplied: false
+  }
+];
+
+const liveMetrics = {
+  commentsPerHour: 156,
+  avgResponseTime: "12 minutes",
+  topEmoji: "🔥",
+  peakHour: "2-3 PM EST",
+  sentimentTrend: "+12%"
+};
 
 export default function CommentsPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [selectedFilter, setSelectedFilter] = useState("needs_attention");
+  const [hoveredComment, setHoveredComment] = useState<number | null>(null);
+  const [showAIInsights, setShowAIInsights] = useState(true);
+  const [liveData, setLiveData] = useState(liveMetrics);
   const [selectedComments, setSelectedComments] = useState<number[]>([]);
+  const [viewMode, setViewMode] = useState<"triage" | "detailed">("triage");
 
-  const filterOptions = [
-    { value: 'all', label: 'All Comments' },
-    { value: 'pending', label: 'Pending Review' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'spam', label: 'Marked as Spam' },
-    { value: 'reported', label: 'Reported' }
-  ];
+  useEffect(() => {
+    // Simulate live updates
+    const interval = setInterval(() => {
+      setLiveData(prev => ({
+        ...prev,
+        commentsPerHour: prev.commentsPerHour + Math.floor(Math.random() * 5),
+      }));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const comments = [
-    {
-      id: 1,
-      author: {
-        name: "Alex Chen",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&auto=format&fit=crop&crop=faces",
-        verified: true
-      },
-      content: "This is exactly what I was looking for! The explanation of React Server Components is crystal clear. Thank you for making such quality content!",
-      video: {
-        title: "React Server Components Explained",
-        thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=60&h=40&auto=format&fit=crop"
-      },
-      timestamp: "2 hours ago",
-      likes: 24,
-      replies: 3,
-      status: "approved",
-      sentiment: "positive"
-    },
-    {
-      id: 2,
-      author: {
-        name: "Sarah Johnson",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=40&h=40&auto=format&fit=crop&crop=faces",
-        verified: false
-      },
-      content: "Could you please make a follow-up video about error boundaries in Next.js? I'm struggling with implementing them properly in my project.",
-      video: {
-        title: "Building a Modern Web App with Next.js 14",
-        thumbnail: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=60&h=40&auto=format&fit=crop"
-      },
-      timestamp: "5 hours ago",
-      likes: 12,
-      replies: 1,
-      status: "approved",
-      sentiment: "neutral"
-    },
-    {
-      id: 3,
-      author: {
-        name: "SpamBot123",
-        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&auto=format&fit=crop&crop=faces",
-        verified: false
-      },
-      content: "🔥🔥 AMAZING CRYPTO OPPORTUNITY!!! 💰💰 Click my profile for FREE MONEY!!! Don't miss out!!!",
-      video: {
-        title: "TypeScript Best Practices 2024",
-        thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=60&h=40&auto=format&fit=crop"
-      },
-      timestamp: "1 day ago",
-      likes: 0,
-      replies: 0,
-      status: "spam",
-      sentiment: "negative"
-    },
-    {
-      id: 4,
-      author: {
-        name: "DevMaster92",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&auto=format&fit=crop&crop=faces",
-        verified: false
-      },
-      content: "This content seems inappropriate and doesn't match the video topic. Please review.",
-      video: {
-        title: "AI Integration Tutorial - Part 1",
-        thumbnail: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=60&h=40&auto=format&fit=crop"
-      },
-      timestamp: "2 days ago",
-      likes: 3,
-      replies: 0,
-      status: "reported",
-      sentiment: "negative"
-    },
-    {
-      id: 5,
-      author: {
-        name: "TechEnthusiast",
-        avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=40&h=40&auto=format&fit=crop&crop=faces",
-        verified: true
-      },
-      content: "Waiting for approval... This tutorial helped me solve a major bug in my production app. The section about state management is particularly valuable.",
-      video: {
-        title: "Live Coding: Building a SaaS Dashboard",
-        thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=60&h=40&auto=format&fit=crop"
-      },
-      timestamp: "3 days ago",
-      likes: 8,
-      replies: 2,
-      status: "pending",
-      sentiment: "positive"
-    }
-  ];
-
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      approved: { bg: "bg-green-500/20", text: "text-green-400", icon: CheckIcon },
-      pending: { bg: "bg-yellow-500/20", text: "text-yellow-400", icon: ClockIcon },
-      spam: { bg: "bg-red-500/20", text: "text-red-400", icon: XMarkIcon },
-      reported: { bg: "bg-orange-500/20", text: "text-orange-400", icon: FlagIcon }
-    };
-    
-    const badge = badges[status as keyof typeof badges];
-    const Icon = badge.icon;
-    
-    return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
-        <Icon className="w-3 h-3" />
-        {status}
-      </span>
-    );
-  };
-
-  const getSentimentIcon = (sentiment: string) => {
+  const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive':
-        return <HeartIcon className="w-4 h-4 text-green-400" />;
-      case 'negative':
-        return <ExclamationTriangleIcon className="w-4 h-4 text-red-400" />;
-      default:
-        return <ChatBubbleLeftRightIcon className="w-4 h-4 text-gray-400" />;
+      case 'positive': return 'text-emerald-300 bg-emerald-500/20';
+      case 'negative': return 'text-red-300 bg-red-500/20';
+      default: return 'text-blue-300 bg-blue-500/20';
     }
   };
 
-  const handleSelectComment = (commentId: number) => {
-    setSelectedComments(prev =>
-      prev.includes(commentId)
-        ? prev.filter(id => id !== commentId)
-        : [...prev, commentId]
-    );
+  const getInfluenceColor = (influence: string) => {
+    switch (influence) {
+      case 'high': return 'from-purple-500 to-pink-500';
+      case 'medium': return 'from-blue-500 to-cyan-500';
+      default: return 'from-gray-500 to-slate-500';
+    }
   };
-
-  const filteredComments = comments.filter(comment => {
-    const matchesSearch = comment.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         comment.author.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterType === 'all' || comment.status === filterType;
-    return matchesSearch && matchesFilter;
-  });
 
   return (
-    <div className="min-h-screen bg-studio-background text-studio-text-primary font-afacad">
-      <div className="p-xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-700 to-purple-900">
+      <div className="p-8 max-w-7xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-xl h-20 border-b border-studio-border pb-xl"
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-studio-surface rounded-base border border-studio-border">
-              <ChatBubbleLeftRightIcon className="w-6 h-6 text-studio-primary" />
-            </div>
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-semibold text-studio-text-primary">Comments Management</h1>
-              <p className="text-sm text-studio-text-secondary mt-1">
-                Moderate and engage with your community
-              </p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="relative">
+                  <ChatBubbleOvalLeftIcon className="w-8 h-8 text-purple-400" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                </div>
+                <h1 className="text-4xl font-bold text-white">Comments</h1>
+                <SparklesIcon className="w-6 h-6 text-amber-400" />
+              </div>
+              <p className="text-lg text-gray-300">Engage with your community and build lasting connections</p>
+            </div>
+            
+            {/* Live Stats */}
+            <div className="flex items-center gap-6">
+              <div className="text-center p-4 bg-white/10 backdrop-blur-xl rounded-xl shadow-lg border border-white/10">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <EyeIcon className="w-5 h-5 text-purple-300" />
+                  <p className="text-2xl font-bold text-white">2.4K</p>
+                </div>
+                <p className="text-sm text-gray-300">New Today</p>
+              </div>
+              <div className="text-center p-4 bg-white/10 backdrop-blur-xl rounded-xl shadow-lg border border-white/10">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <ArrowTrendingUpIcon className="w-5 h-5 text-emerald-300" />
+                  <p className="text-2xl font-bold text-emerald-300">89%</p>
+                </div>
+                <p className="text-sm text-gray-300">Positive</p>
+              </div>
+              <div className="text-center p-4 bg-white/10 backdrop-blur-xl rounded-xl shadow-lg border border-white/10">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <StarIcon className="w-5 h-5 text-amber-300" />
+                  <p className="text-2xl font-bold text-amber-300">4.8</p>
+                </div>
+                <p className="text-sm text-gray-300">Avg Rating</p>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3">
-            {selectedComments.length > 0 && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-studio-surface border border-studio-border rounded-base">
-                <span className="text-sm text-studio-text-secondary">{selectedComments.length} selected</span>
-                <button className="px-3 py-1.5 bg-green-500/20 text-green-400 rounded text-xs font-medium hover:bg-green-500/30 transition-colors">
-                  Approve
+        {/* Quick Actions Bar */}
+        <div className="mb-8 p-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold mb-1">Comment Insights</h3>
+              <p className="text-purple-100">Your latest video "React Server Components" is generating buzz! 🚀</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold">+156%</p>
+                <p className="text-xs text-purple-200">Engagement</p>
+              </div>
+              <button className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors backdrop-blur-sm">
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Workflow Navigation & Actions */}
+        <div className="mb-8 space-y-4">
+          {/* Primary Actions Bar */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* View Mode Toggle */}
+              <div className="flex items-center bg-white/10 backdrop-blur-xl rounded-xl p-1 border border-white/10">
+                <button
+                  onClick={() => setViewMode("triage")}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    viewMode === "triage" 
+                      ? "bg-purple-600 text-white shadow-lg" 
+                      : "text-gray-300 hover:text-white"
+                  }`}
+                >
+                  Triage
                 </button>
-                <button className="px-3 py-1.5 bg-red-500/20 text-red-400 rounded text-xs font-medium hover:bg-red-500/30 transition-colors">
-                  Delete
+                <button
+                  onClick={() => setViewMode("detailed")}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                    viewMode === "detailed" 
+                      ? "bg-purple-600 text-white shadow-lg" 
+                      : "text-gray-300 hover:text-white"
+                  }`}
+                >
+                  Detailed
+                </button>
+              </div>
+
+              {/* Quick Search */}
+              <div className="relative group">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-purple-300" />
+                <input
+                  type="text"
+                  placeholder="Search comments..."
+                  className="pl-10 pr-4 py-3 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-white placeholder-gray-300 w-80"
+                />
+              </div>
+            </div>
+
+            {/* Bulk Actions */}
+            {selectedComments.length > 0 && (
+              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/10">
+                <span className="text-white font-medium">{selectedComments.length} selected</span>
+                <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                  Approve All
+                </button>
+                <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                  Delete All
+                </button>
+                <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                  Mark as Spam
                 </button>
               </div>
             )}
           </div>
-        </motion.div>
 
-        {/* Stats Cards */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-xl"
-        >
-          <div className="bg-studio-surface border border-studio-border rounded-xl p-6 hover:border-studio-primary/50 transition-colors">
-            <div className="flex items-center gap-3 mb-3">
-              <ChatBubbleLeftRightIcon className="w-5 h-5 text-blue-400" />
-              <h3 className="text-sm font-medium text-studio-text-secondary">Total Comments</h3>
-            </div>
-            <p className="text-2xl font-semibold text-studio-text-primary">1,247</p>
-            <p className="text-xs text-studio-text-muted mt-1">+23 this week</p>
-          </div>
-
-          <div className="bg-studio-surface border border-studio-border rounded-xl p-6 hover:border-studio-primary/50 transition-colors">
-            <div className="flex items-center gap-3 mb-3">
-              <ClockIcon className="w-5 h-5 text-yellow-400" />
-              <h3 className="text-sm font-medium text-studio-text-secondary">Pending Review</h3>
-            </div>
-            <p className="text-2xl font-semibold text-studio-text-primary">12</p>
-            <p className="text-xs text-studio-text-muted mt-1">Needs attention</p>
-          </div>
-
-          <div className="bg-studio-surface border border-studio-border rounded-xl p-6 hover:border-studio-primary/50 transition-colors">
-            <div className="flex items-center gap-3 mb-3">
-              <FlagIcon className="w-5 h-5 text-orange-400" />
-              <h3 className="text-sm font-medium text-studio-text-secondary">Reported</h3>
-            </div>
-            <p className="text-2xl font-semibold text-studio-text-primary">3</p>
-            <p className="text-xs text-studio-text-muted mt-1">Community reports</p>
-          </div>
-
-          <div className="bg-studio-surface border border-studio-border rounded-xl p-6 hover:border-studio-primary/50 transition-colors">
-            <div className="flex items-center gap-3 mb-3">
-              <HeartIcon className="w-5 h-5 text-green-400" />
-              <h3 className="text-sm font-medium text-studio-text-secondary">Engagement Rate</h3>
-            </div>
-            <p className="text-2xl font-semibold text-studio-text-primary">87%</p>
-            <p className="text-xs text-studio-text-muted mt-1">Positive sentiment</p>
-          </div>
-
-          <div className="bg-studio-surface border border-studio-border rounded-xl p-6 hover:border-studio-primary/50 transition-colors">
-            <div className="flex items-center gap-3 mb-3">
-              <XMarkIcon className="w-5 h-5 text-red-400" />
-              <h3 className="text-sm font-medium text-studio-text-secondary">Spam Blocked</h3>
-            </div>
-            <p className="text-2xl font-semibold text-studio-text-primary">89</p>
-            <p className="text-xs text-studio-text-muted mt-1">Auto-filtered</p>
-          </div>
-        </motion.div>
-
-        {/* Filters */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center gap-4 mb-6"
-        >
-          <div className="relative flex-1 max-w-md">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-studio-text-muted" />
-            <input
-              type="text"
-              placeholder="Search comments..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-studio-surface border border-studio-border rounded-base text-studio-text-primary placeholder-studio-text-muted focus:outline-none focus:border-studio-primary text-sm"
-            />
-          </div>
-
-          <CustomSelect
-            options={filterOptions}
-            placeholder="Filter by status"
-            defaultValue="all"
-            onChange={(value) => setFilterType(value)}
-            className="w-48"
-          />
-        </motion.div>
-
-        {/* Comments List */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="bg-studio-surface border border-studio-border rounded-xl overflow-hidden"
-        >
-          <div className="divide-y divide-studio-border">
-            {filteredComments.map((comment, index) => (
-              <motion.div
-                key={comment.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 + index * 0.1 }}
-                className={`p-6 hover:bg-studio-background/50 transition-colors ${
-                  selectedComments.includes(comment.id) ? 'bg-studio-primary/5 border-l-4 border-studio-primary' : ''
+          {/* Priority Filters */}
+          <div className="flex items-center gap-3 overflow-x-auto pb-2">
+            {[
+              { 
+                label: "Needs Attention", 
+                count: "23", 
+                active: selectedFilter === "needs_attention",
+                color: "bg-red-500",
+                description: "Flagged, reported, or spam"
+              },
+              { 
+                label: "Questions", 
+                count: "45", 
+                active: selectedFilter === "questions",
+                color: "bg-blue-500",
+                description: "Comments asking questions"
+              },
+              { 
+                label: "Positive", 
+                count: "156", 
+                active: selectedFilter === "positive",
+                color: "bg-emerald-500",
+                description: "Praise and positive feedback"
+              },
+              { 
+                label: "Unanswered", 
+                count: "89", 
+                active: selectedFilter === "unanswered",
+                color: "bg-amber-500",
+                description: "Haven't replied yet"
+              },
+              { 
+                label: "From Subscribers", 
+                count: "78", 
+                active: selectedFilter === "subscribers",
+                color: "bg-purple-500",
+                description: "Comments from subscribers"
+              },
+              { 
+                label: "All Comments", 
+                count: "2.4K", 
+                active: selectedFilter === "all",
+                color: "bg-gray-500",
+                description: "All comments"
+              }
+            ].map((filter) => (
+              <button
+                key={filter.label}
+                onClick={() => setSelectedFilter(filter.label.toLowerCase().replace(" ", "_"))}
+                className={`group relative px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-3 whitespace-nowrap ${
+                  filter.active
+                    ? "bg-white/15 text-white shadow-lg border-2 border-white/30"
+                    : "bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10"
                 }`}
               >
-                <div className="flex items-start gap-4">
+                <div className={`w-3 h-3 rounded-full ${filter.color} ${filter.active ? 'animate-pulse' : ''}`}></div>
+                <span>{filter.label}</span>
+                <span className="text-xs px-2 py-1 bg-white/20 rounded-full">{filter.count}</span>
+                
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                  {filter.description}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Comments Feed */}
+        <div className="space-y-4">
+          {mockComments.map((comment) => (
+            viewMode === "triage" ? (
+              // Triage Mode - Efficient Workflow View
+              <div
+                key={comment.id}
+                className="group relative bg-white/5 backdrop-blur-xl rounded-xl p-4 border border-white/10 hover:bg-white/10 transition-all duration-200"
+                onMouseEnter={() => setHoveredComment(comment.id)}
+                onMouseLeave={() => setHoveredComment(null)}
+              >
+                <div className="flex items-center gap-4">
+                  {/* Selection Checkbox */}
                   <input
                     type="checkbox"
                     checked={selectedComments.includes(comment.id)}
-                    onChange={() => handleSelectComment(comment.id)}
-                    className="mt-1 w-4 h-4 rounded border-studio-border text-studio-primary focus:ring-studio-primary focus:ring-offset-0"
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedComments([...selectedComments, comment.id]);
+                      } else {
+                        setSelectedComments(selectedComments.filter(id => id !== comment.id));
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-2 border-white/30 bg-white/10 text-purple-600 focus:ring-purple-500 focus:ring-2"
                   />
 
-                  <img
-                    src={comment.author.avatar}
-                    alt={comment.author.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  {/* Priority Indicator */}
+                  <div className={`w-3 h-3 rounded-full ${
+                    comment.sentiment === 'negative' ? 'bg-red-500' :
+                    comment.sentiment === 'positive' ? 'bg-emerald-500' :
+                    'bg-amber-500'
+                  }`}></div>
 
+                  {/* Author & Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-sm font-medium text-studio-text-primary">{comment.author.name}</h3>
-                      {comment.author.verified && (
-                        <CheckIcon className="w-4 h-4 text-blue-400" />
-                      )}
-                      <span className="text-xs text-studio-text-muted">•</span>
-                      <span className="text-xs text-studio-text-muted">{comment.timestamp}</span>
-                      {getStatusBadge(comment.status)}
+                    <div className="flex items-center gap-2 mb-1">
+                      <img
+                        src={comment.avatar}
+                        alt={comment.author}
+                        className="w-6 h-6 rounded-full"
+                      />
+                      <span className="font-medium text-white text-sm">{comment.author}</span>
+                      {comment.isVerified && <CheckCircleIcon className="w-4 h-4 text-blue-400" />}
+                      {comment.isSubscriber && <StarSolidIcon className="w-4 h-4 text-purple-400" />}
+                      <span className="text-xs text-gray-400">• {comment.time}</span>
+                      <span className="text-xs text-gray-500">on "{comment.video}"</span>
                     </div>
+                    <p className="text-gray-200 text-sm line-clamp-2">{comment.comment}</p>
+                  </div>
 
-                    <p className="text-sm text-studio-text-primary mb-3 leading-relaxed">
-                      {comment.content}
-                    </p>
+                  {/* Quick Stats */}
+                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-1">
+                      <HeartIcon className="w-4 h-4" />
+                      <span>{comment.likes}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <ChatBubbleOvalLeftIcon className="w-4 h-4" />
+                      <span>{comment.replies}</span>
+                    </div>
+                    <div className={`px-2 py-1 rounded-full text-xs ${
+                      comment.hasReplied ? 'bg-green-500/20 text-green-300' : 'bg-amber-500/20 text-amber-300'
+                    }`}>
+                      {comment.hasReplied ? 'Replied' : 'Pending'}
+                    </div>
+                  </div>
 
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={comment.video.thumbnail}
-                          alt={comment.video.title}
-                          className="w-12 h-8 rounded object-cover"
-                        />
-                        <span className="text-xs text-studio-text-muted max-w-48 truncate">
-                          {comment.video.title}
-                        </span>
+                  {/* Quick Actions */}
+                  <div className={`flex items-center gap-2 transition-all duration-200 ${
+                    hoveredComment === comment.id ? "opacity-100" : "opacity-60"
+                  }`}>
+                    <button className="p-2 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors" title="Approve">
+                      <CheckCircleIcon className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors" title="Reply">
+                      <PaperAirplaneIcon className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors" title="Delete">
+                      <XCircleIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Detailed Mode - Full Information View
+              <div
+                key={comment.id}
+                className="group relative bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl hover:shadow-purple-500/20 hover:bg-white/10 transition-all duration-300 transform hover:scale-[1.02]"
+                onMouseEnter={() => setHoveredComment(comment.id)}
+                onMouseLeave={() => setHoveredComment(null)}
+              >
+                {/* Trending Badge */}
+                {comment.trending && (
+                  <div className="absolute -top-2 -right-2 px-3 py-1.5 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-xl flex items-center gap-1 animate-pulse z-20">
+                    <FireSolidIcon className="w-3 h-3" />
+                    <span>Trending</span>
+                  </div>
+                )}
+
+                {/* Pinned Badge */}
+                {comment.isPinned && (
+                  <div className="absolute -top-2 -left-2 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full shadow-xl flex items-center gap-1 z-20">
+                    <span>📌</span>
+                    <span>Pinned</span>
+                  </div>
+                )}
+
+                {/* Detailed content - same as before but condensed */}
+                <div className="relative z-10 flex gap-6">
+                  {/* Enhanced Avatar */}
+                  <div className="relative flex-shrink-0">
+                    <div className={`absolute -inset-1 rounded-full bg-gradient-to-r ${getInfluenceColor(comment.influence)} p-0.5 animate-pulse opacity-60`}>
+                      <div className="w-full h-full bg-slate-900 rounded-full"></div>
+                    </div>
+                    <img
+                      src={comment.avatar}
+                      alt={comment.author}
+                      className="relative w-16 h-16 rounded-full object-cover ring-2 ring-white/30"
+                    />
+                    
+                    {/* Verification Badge */}
+                    {comment.isVerified && (
+                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center ring-2 ring-slate-900">
+                        <CheckCircleIcon className="w-4 h-4 text-white" />
                       </div>
+                    )}
+                    
+                    {/* Subscriber Badge */}
+                    {comment.isSubscriber && (
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center ring-2 ring-slate-900">
+                        <StarSolidIcon className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+
+                    {/* Sentiment Indicator */}
+                    <div className={`absolute -bottom-1 -left-1 w-5 h-5 rounded-full border-2 border-slate-900 ${getSentimentColor(comment.sentiment)}`}></div>
+                  </div>
+                  
+                  {/* Enhanced Content */}
+                  <div className="flex-1 min-w-0">
+                    {/* Author Header with Enhanced Info */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-white text-xl">{comment.author}</h3>
+                        {comment.isVerified && (
+                          <CheckCircleIcon className="w-5 h-5 text-blue-400" />
+                        )}
+                        {comment.isSubscriber && (
+                          <StarSolidIcon className="w-5 h-5 text-purple-400" />
+                        )}
+                      </div>
+                      <span className="text-sm text-gray-500">•</span>
+                      <span className="text-sm text-gray-400">{comment.time}</span>
+                      <span className="text-sm text-gray-500">•</span>
+                      <span className="text-sm text-gray-400">{comment.location}</span>
                     </div>
 
+                    {/* AI Insights & Engagement Score */}
+                    {showAIInsights && (
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 text-purple-300 rounded-full text-sm">
+                          <LightBulbIcon className="w-4 h-4" />
+                          <span className="font-medium">{comment.aiInsight}</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 text-blue-300 rounded-full text-sm">
+                          <span className="font-bold">{comment.engagementScore}%</span>
+                          <span>Engagement</span>
+                        </div>
+                        <div className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+                          comment.influence === 'high' ? 'bg-purple-500/20 text-purple-300' :
+                          comment.influence === 'medium' ? 'bg-blue-500/20 text-blue-300' :
+                          'bg-gray-500/20 text-gray-300'
+                        }`}>
+                          {comment.influence} influence
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Enhanced Comment */}
+                    <p className="text-gray-200 text-lg leading-relaxed mb-4 font-medium">{comment.comment}</p>
+                    
+                    {/* Video Context */}
+                    <div className="flex items-center gap-6 text-sm text-gray-400 mb-4">
+                      <span className="flex items-center gap-2 font-medium">
+                        <span>📺</span>
+                        <span>on "{comment.video}"</span>
+                      </span>
+                    </div>
+
+                    {/* Enhanced Sentiment Analysis */}
+                    {comment.sentiment === 'positive' && (
+                      <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl backdrop-blur-sm">
+                        <div className="flex items-center gap-3 text-emerald-300">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">⭐</span>
+                            <span className="font-bold">Positive feedback detected</span>
+                          </div>
+                          <span className="text-sm opacity-75">• High engagement potential</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Enhanced Action Bar */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <HandThumbUpIcon className="w-4 h-4 text-studio-text-muted" />
-                          <span className="text-xs text-studio-text-muted">{comment.likes}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <ChatBubbleLeftRightIcon className="w-4 h-4 text-studio-text-muted" />
-                          <span className="text-xs text-studio-text-muted">{comment.replies} replies</span>
-                        </div>
-                        {getSentimentIcon(comment.sentiment)}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button className="p-2 hover:bg-studio-background rounded-lg transition-colors">
-                          <EyeIcon className="w-4 h-4 text-studio-text-muted" />
+                        <button className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 ${
+                          comment.isHearted 
+                            ? "bg-red-500/20 text-red-300 hover:bg-red-500/30 shadow-lg shadow-red-500/20" 
+                            : "bg-white/10 text-gray-300 hover:bg-white/15 backdrop-blur-xl"
+                        }`}>
+                          {comment.isHearted ? (
+                            <HeartSolidIcon className="w-5 h-5" />
+                          ) : (
+                            <HeartIcon className="w-5 h-5" />
+                          )}
+                          <span className="font-bold">{comment.likes}</span>
+                          <span className="text-sm opacity-75">likes</span>
                         </button>
-                        <button className="p-2 hover:bg-studio-background rounded-lg transition-colors">
-                          <EllipsisHorizontalIcon className="w-4 h-4 text-studio-text-muted" />
+                        
+                        <button className="flex items-center gap-2 px-6 py-3 bg-white/10 text-gray-300 hover:bg-white/15 rounded-xl transition-all backdrop-blur-xl font-semibold transform hover:scale-105">
+                          <ChatBubbleOvalLeftIcon className="w-5 h-5" />
+                          <span className="font-bold">{comment.replies}</span>
+                          <span className="text-sm opacity-75">replies</span>
+                        </button>
+
+                        {/* Creator Response Status */}
+                        {comment.hasReplied ? (
+                          <div className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-300 rounded-xl text-sm font-medium">
+                            <CheckCircleIcon className="w-4 h-4" />
+                            <span>You replied</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/20 text-amber-300 rounded-xl text-sm font-medium">
+                            <ClockIcon className="w-4 h-4" />
+                            <span>Awaiting response</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Enhanced Quick Actions */}
+                      <div className={`flex items-center gap-3 transition-all duration-300 ${
+                        hoveredComment === comment.id ? "opacity-100 transform scale-100" : "opacity-0 transform scale-95"
+                      }`}>
+                        <button className="p-3 text-gray-400 hover:text-emerald-300 hover:bg-emerald-500/20 rounded-xl transition-all backdrop-blur-xl transform hover:scale-110">
+                          <CheckCircleIcon className="w-6 h-6" />
+                        </button>
+                        <button className="p-3 text-gray-400 hover:text-red-300 hover:bg-red-500/20 rounded-xl transition-all backdrop-blur-xl transform hover:scale-110">
+                          <XCircleIcon className="w-6 h-6" />
+                        </button>
+                        <button className="p-3 text-gray-400 hover:text-amber-300 hover:bg-amber-500/20 rounded-xl transition-all backdrop-blur-xl transform hover:scale-110">
+                          <FlagIcon className="w-6 h-6" />
+                        </button>
+                        <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:shadow-lg hover:shadow-purple-500/30 transition-all font-bold transform hover:scale-105">
+                          <PaperAirplaneIcon className="w-5 h-5" />
+                          <span>Reply</span>
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            )
+          ))}
+        </div>
 
-          {filteredComments.length === 0 && (
-            <div className="p-12 text-center">
-              <ChatBubbleLeftRightIcon className="w-12 h-12 text-studio-text-muted mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-studio-text-primary mb-2">No comments found</h3>
-              <p className="text-sm text-studio-text-muted">
-                {searchQuery || filterType !== 'all'
-                  ? 'Try adjusting your search or filters'
-                  : 'Comments will appear here as they come in'}
-              </p>
+        {/* AI Insights Dashboard */}
+        <div className="mt-12 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Real-time Analytics */}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-3xl blur-lg opacity-20"></div>
+              <div className="relative bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl">
+                    <ChartBarIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white">Live Analytics</h3>
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 rounded-2xl p-4 text-center">
+                    <p className="text-3xl font-black text-cyan-300">{liveData.commentsPerHour}</p>
+                    <p className="text-sm text-gray-300">Comments/Hour</p>
+                  </div>
+                  <div className="bg-white/5 rounded-2xl p-4 text-center">
+                    <p className="text-3xl font-black text-emerald-300">{liveData.avgResponseTime}</p>
+                    <p className="text-sm text-gray-300">Avg Response</p>
+                  </div>
+                  <div className="bg-white/5 rounded-2xl p-4 text-center">
+                    <p className="text-3xl font-black text-amber-300">{liveData.topEmoji}</p>
+                    <p className="text-sm text-gray-300">Top Emoji</p>
+                  </div>
+                  <div className="bg-white/5 rounded-2xl p-4 text-center">
+                    <p className="text-3xl font-black text-purple-300">{liveData.sentimentTrend}</p>
+                    <p className="text-sm text-gray-300">Sentiment</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </motion.div>
+
+            {/* Smart Moderation Tools */}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-3xl blur-lg opacity-20"></div>
+              <div className="relative bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl">
+                    <SparklesIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white">Smart Moderation</h3>
+                  <BoltIcon className="w-5 h-5 text-amber-400" />
+                </div>
+                
+                <div className="space-y-4">
+                  <button className="w-full flex items-center justify-between p-4 bg-emerald-500/20 hover:bg-emerald-500/30 rounded-2xl transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <CheckCircleIcon className="w-5 h-5 text-emerald-300" />
+                      <span className="text-white font-semibold">Auto-approve positive comments</span>
+                    </div>
+                    <div className="w-12 h-6 bg-emerald-500 rounded-full relative">
+                      <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5"></div>
+                    </div>
+                  </button>
+                  
+                  <button className="w-full flex items-center justify-between p-4 bg-red-500/20 hover:bg-red-500/30 rounded-2xl transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <XCircleIcon className="w-5 h-5 text-red-300" />
+                      <span className="text-white font-semibold">Flag suspicious activity</span>
+                    </div>
+                    <div className="w-12 h-6 bg-red-500 rounded-full relative">
+                      <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5"></div>
+                    </div>
+                  </button>
+                  
+                  <button className="w-full flex items-center justify-between p-4 bg-blue-500/20 hover:bg-blue-500/30 rounded-2xl transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <LightBulbIcon className="w-5 h-5 text-blue-300" />
+                      <span className="text-white font-semibold">AI response suggestions</span>
+                    </div>
+                    <div className="w-12 h-6 bg-blue-500 rounded-full relative">
+                      <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5"></div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Premium Action Center */}
+        <div className="mt-12 mb-12">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-violet-400 via-purple-400 to-pink-400 rounded-3xl blur-lg opacity-30"></div>
+            <div className="relative bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-gradient-to-br from-violet-500 to-pink-500 rounded-2xl">
+                    <GiftIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white">Creator Toolkit</h3>
+                  <CursorArrowRaysIcon className="w-5 h-5 text-purple-300" />
+                </div>
+                <button onClick={() => setShowAIInsights(!showAIInsights)} className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+                  showAIInsights ? 'bg-purple-600 text-white' : 'bg-white/10 text-gray-300'
+                }`}>
+                  {showAIInsights ? 'Hide' : 'Show'} AI Insights
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button className="group p-6 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl hover:shadow-xl hover:shadow-emerald-500/20 transition-all transform hover:scale-105">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="text-4xl">🎯</div>
+                    <span className="text-white font-bold">Bulk Reply</span>
+                    <span className="text-emerald-100 text-sm">Respond to multiple comments</span>
+                  </div>
+                </button>
+                
+                <button className="group p-6 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl hover:shadow-xl hover:shadow-blue-500/20 transition-all transform hover:scale-105">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="text-4xl">🤖</div>
+                    <span className="text-white font-bold">AI Assistant</span>
+                    <span className="text-blue-100 text-sm">Generate smart responses</span>
+                  </div>
+                </button>
+                
+                <button className="group p-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl hover:shadow-xl hover:shadow-purple-500/20 transition-all transform hover:scale-105">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="text-4xl">📊</div>
+                    <span className="text-white font-bold">Export Data</span>
+                    <span className="text-purple-100 text-sm">Download analytics</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Load More */}
+        <div className="mt-12 text-center">
+          <div className="relative inline-block">
+            <div className="absolute -inset-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur-xl opacity-50"></div>
+            <button className="relative px-12 py-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-2xl hover:shadow-2xl hover:shadow-purple-500/30 transition-all duration-300 transform hover:scale-105">
+              <span className="flex items-center gap-3">
+                <span className="text-lg">Load More Comments</span>
+                <ArrowTrendingUpIcon className="w-6 h-6" />
+              </span>
+            </button>
+          </div>
+          <div className="mt-6 flex items-center justify-center gap-6 text-gray-400">
+            <span className="text-lg">Showing 5 of 2,486 comments</span>
+            <span className="text-2xl">•</span>
+            <span className="flex items-center gap-2">
+              <EyeIcon className="w-5 h-5" />
+              <span>89% engagement rate</span>
+            </span>
+            <span className="text-2xl">•</span>
+            <span className="flex items-center gap-2">
+              <StarIcon className="w-5 h-5 text-amber-400" />
+              <span>4.8 avg rating</span>
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
