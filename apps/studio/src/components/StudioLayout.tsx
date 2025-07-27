@@ -10,7 +10,6 @@ import {
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
-  BellIcon,
   FolderIcon,
   LanguageIcon,
   PaintBrushIcon,
@@ -130,24 +129,6 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="h-16 border-b border-gray-800/50 bg-[#0a0a0f]/95 backdrop-blur-sm flex items-center justify-between px-6">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold text-white">
-              {pathname === "/"
-                ? "Dashboard"
-                : pathname.slice(1).charAt(0).toUpperCase() + pathname.slice(2)}
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button className="relative p-2.5 rounded-xl hover:bg-gray-800/50 text-gray-400 hover:text-white transition-colors">
-              <BellIcon className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full" />
-            </button>
-          </div>
-        </header>
-
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-[#0a0a0f]">{children}</main>
       </div>
