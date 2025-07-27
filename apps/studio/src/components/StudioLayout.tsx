@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import {
   HomeIcon,
@@ -19,6 +20,7 @@ import {
   CloudArrowUpIcon,
   UserCircleIcon,
   CogIcon,
+  PencilIcon,
 } from "@heroicons/react/24/outline";
 
 const navigationItems = [
@@ -54,8 +56,24 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
           </Link>
         </div>
 
+        {/* Profile */}
+        <div className="px-6 pt-6 pb-6 flex flex-col items-center">
+          <button className="relative group">
+            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center shadow-lg">
+              <UserCircleIcon className="w-14 h-14 text-white" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gray-800 rounded-full border-2 border-[#0a0a0f] flex items-center justify-center group-hover:bg-gray-700 transition-colors">
+              <PencilIcon className="w-4 h-4 text-gray-400 group-hover:text-white" />
+            </div>
+          </button>
+          <div className="mt-4 text-center">
+            <p className="text-lg font-semibold text-white">Your channel</p>
+            <p className="text-sm text-gray-500">Fred A</p>
+          </div>
+        </div>
+
         {/* Navigation */}
-        <nav className="flex-1 px-4 pt-8 pb-4 overflow-y-auto">
+        <nav className="flex-1 px-4 pt-1 pb-4 overflow-y-auto">
           <ul className="space-y-2">
             {navigationItems.map((item) => {
               const isActive = pathname === item.href;
@@ -115,14 +133,20 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
         <div className="border-t border-gray-800/50 px-4 pt-6 pb-4">
           <button className="w-full flex items-center gap-3">
             <div className="relative flex-shrink-0">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center">
-                <UserCircleIcon className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center">
+                <Image
+                  src="/fabl.png"
+                  alt="Fabl Logo"
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-cover rounded-2xl"
+                />
               </div>
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0a0f]" />
             </div>
             <div className="flex-1 text-left">
               <p className="text-base font-semibold text-white">Your Channel</p>
-              <p className="text-sm text-gray-500">@yourchannel • 45.7K subs</p>
+              <p className="text-sm text-gray-500">All systems operational</p>
             </div>
           </button>
         </div>
