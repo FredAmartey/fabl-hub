@@ -28,6 +28,9 @@ export default function CustomizationPage() {
     { id: 1, title: "Website", url: "https://example.com" },
     { id: 2, title: "Twitter", url: "https://twitter.com/username" }
   ]);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [watermarkFile, setWatermarkFile] = useState<File | null>(null);
 
   const channelData = {
     name: "Fred A",
@@ -48,6 +51,72 @@ export default function CustomizationPage() {
     { id: "links", name: "Links", icon: LinkIcon },
     { id: "watermark", name: "Video Watermark", icon: TagIcon }
   ];
+
+  const handleBannerClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        setBannerFile(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleProfileClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        setProfileFile(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleWatermarkClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/png,image/gif,image/bmp,image/jpeg';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        setWatermarkFile(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleSaveBanner = () => {
+    // Save banner logic would go here
+    console.log('Saving banner:', bannerFile);
+  };
+
+  const handleSaveProfile = () => {
+    // Save profile logic would go here
+    console.log('Saving profile:', profileFile);
+  };
+
+  const handleSaveWatermark = () => {
+    // Save watermark logic would go here
+    console.log('Saving watermark:', watermarkFile);
+  };
+
+  const handleRemoveBanner = () => {
+    setBannerFile(null);
+  };
+
+  const handleRemoveProfile = () => {
+    setProfileFile(null);
+  };
+
+  const handleRemoveWatermark = () => {
+    setWatermarkFile(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
@@ -131,12 +200,23 @@ export default function CustomizationPage() {
 
                 {/* Banner Preview Area */}
                 <div className="mb-6">
-                  <div className="relative bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl h-48 flex items-center justify-center border-2 border-dashed border-gray-300">
-                    <div className="text-center">
-                      <CameraIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 font-medium">No banner image uploaded</p>
-                      <p className="text-sm text-gray-500">Recommended: 2048 x 1152 pixels</p>
-                    </div>
+                  <div 
+                    onClick={handleBannerClick}
+                    className="relative bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl h-48 flex items-center justify-center border-2 border-dashed border-gray-300 cursor-pointer hover:border-purple-400 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-200 overflow-hidden"
+                  >
+                    {bannerFile ? (
+                      <img 
+                        src={URL.createObjectURL(bannerFile)} 
+                        alt="Banner preview" 
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <CameraIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                        <p className="text-gray-600 font-medium">Click to upload banner image</p>
+                        <p className="text-sm text-gray-500">Recommended: 2048 x 1152 pixels</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -157,11 +237,22 @@ export default function CustomizationPage() {
 
                 {/* Upload Actions */}
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg transition-all">
+                  <button 
+                    onClick={handleSaveBanner}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg transition-all"
+                  >
                     <PhotoIcon className="w-5 h-5" />
                     Upload
                   </button>
-                  <button className="px-4 py-3 text-gray-600 hover:text-gray-900 font-medium rounded-xl hover:bg-gray-50 transition-all">
+                  <button 
+                    onClick={handleRemoveBanner}
+                    disabled={!bannerFile}
+                    className={`px-4 py-3 font-medium rounded-xl transition-all ${
+                      bannerFile 
+                        ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' 
+                        : 'text-gray-300 cursor-not-allowed'
+                    }`}
+                  >
                     Remove
                   </button>
                 </div>
@@ -190,13 +281,24 @@ export default function CustomizationPage() {
                 {/* Profile Picture Preview */}
                 <div className="flex items-start gap-6 mb-6">
                   <div className="relative">
-                    <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-                      <UserIcon className="w-12 h-12 text-gray-400" />
+                    <div 
+                      onClick={handleProfileClick}
+                      className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-4 border-white shadow-lg cursor-pointer hover:border-purple-400 hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 transition-all duration-200 overflow-hidden"
+                    >
+                      {profileFile ? (
+                        <img 
+                          src={URL.createObjectURL(profileFile)} 
+                          alt="Profile preview" 
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <UserIcon className="w-12 h-12 text-gray-400" />
+                      )}
                     </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Current profile picture</h3>
-                    <p className="text-gray-600 mb-4">No profile picture uploaded</p>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Profile picture</h3>
+                    <p className="text-gray-600 mb-4">{profileFile ? `Selected: ${profileFile.name}` : 'Click the circle to upload a profile picture'}</p>
                     
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                       <div className="flex items-start gap-3">
@@ -217,11 +319,22 @@ export default function CustomizationPage() {
 
                 {/* Upload Actions */}
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg transition-all">
+                  <button 
+                    onClick={handleSaveProfile}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg transition-all"
+                  >
                     <PhotoIcon className="w-5 h-5" />
-                    Change
+                    Upload
                   </button>
-                  <button className="px-4 py-3 text-gray-600 hover:text-gray-900 font-medium rounded-xl hover:bg-gray-50 transition-all">
+                  <button 
+                    onClick={handleRemoveProfile}
+                    disabled={!profileFile}
+                    className={`px-4 py-3 font-medium rounded-xl transition-all ${
+                      profileFile 
+                        ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' 
+                        : 'text-gray-300 cursor-not-allowed'
+                    }`}
+                  >
                     Remove
                   </button>
                 </div>
@@ -396,11 +509,24 @@ export default function CustomizationPage() {
                   </p>
 
                   {/* Watermark Preview */}
-                  <div className="bg-gray-100 rounded-xl p-8 text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <TagIcon className="w-8 h-8 text-gray-400" />
+                  <div 
+                    onClick={handleWatermarkClick}
+                    className="bg-gray-100 rounded-xl p-8 text-center cursor-pointer hover:bg-gradient-to-br hover:from-purple-50 hover:to-pink-50 hover:border-2 hover:border-purple-300 transition-all duration-200"
+                  >
+                    <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                      {watermarkFile ? (
+                        <img 
+                          src={URL.createObjectURL(watermarkFile)} 
+                          alt="Watermark preview" 
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <TagIcon className="w-8 h-8 text-gray-400" />
+                      )}
                     </div>
-                    <p className="text-gray-600 font-medium">No watermark uploaded</p>
+                    <p className="text-gray-600 font-medium">
+                      {watermarkFile ? `Selected: ${watermarkFile.name}` : 'Click to upload watermark'}
+                    </p>
                     <p className="text-sm text-gray-500">150 x 150 pixels recommended</p>
                   </div>
 
@@ -421,9 +547,23 @@ export default function CustomizationPage() {
 
                   {/* Upload Actions */}
                   <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg transition-all">
+                    <button 
+                      onClick={handleSaveWatermark}
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg transition-all"
+                    >
                       <PhotoIcon className="w-5 h-5" />
                       Upload
+                    </button>
+                    <button 
+                      onClick={handleRemoveWatermark}
+                      disabled={!watermarkFile}
+                      className={`px-4 py-3 font-medium rounded-xl transition-all ${
+                        watermarkFile 
+                          ? 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' 
+                          : 'text-gray-300 cursor-not-allowed'
+                      }`}
+                    >
+                      Remove
                     </button>
                   </div>
                 </div>

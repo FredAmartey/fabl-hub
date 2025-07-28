@@ -32,7 +32,7 @@ const navigationItems = [
   { name: "Subtitles", href: "/subtitles", icon: LanguageIcon },
   { name: "Monetization", href: "/monetization", icon: CurrencyDollarIcon },
   { name: "Customization", href: "/customization", icon: PaintBrushIcon },
-  { name: "Audio Library", href: "/audio", icon: MusicalNoteIcon },
+  { name: "Audio Library", href: "/audio-library", icon: MusicalNoteIcon },
 ];
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
