@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -11,7 +11,6 @@ import {
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
   CurrencyDollarIcon,
-  BellIcon,
   FolderIcon,
   LanguageIcon,
   PaintBrushIcon,
@@ -21,7 +20,13 @@ import {
   UserCircleIcon,
   CogIcon,
   PencilIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+import ChannelSettingsSimple from "./ChannelSettingsSimple";
+import CustomDropdown from "./CustomDropdown";
+import ToggleSwitch from "./ToggleSwitch";
+import UploadWizard from "./UploadWizard";
+import UploadProgressTracker from "./UploadProgressTracker";
 
 const navigationItems = [
   { name: "Dashboard", href: "/", icon: HomeIcon },
@@ -35,8 +40,94 @@ const navigationItems = [
   { name: "Audio Library", href: "/audio-library", icon: MusicalNoteIcon },
 ];
 
+interface UploadFile {
+  id: string
+  name: string
+  size: number
+  type: string
+  progress: number
+  status: 'uploading' | 'processing' | 'completed' | 'error'
+  thumbnail?: string
+}
+
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [uploadQueue, setUploadQueue] = useState<UploadFile[]>([]);
+  const [showProgressTracker, setShowProgressTracker] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+
+  // Lock body scroll when modal is open
+  React.useEffect(() => {
+    if (showUploadModal || showSettingsModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showUploadModal, showSettingsModal]);
+
+  const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setProfilePicture(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleMultipleUploads = (files: UploadFile[]) => {
+    console.log('handleMultipleUploads called with', files.length, 'files');
+    setUploadQueue(files);
+    setShowProgressTracker(true);
+    
+    // Simulate upload progress for each file
+    files.forEach((file) => {
+      simulateUploadProgress(file.id);
+    });
+  };
+
+  const simulateUploadProgress = (fileId: string) => {
+    let currentProgress = 0;
+    
+    const interval = setInterval(() => {
+      currentProgress += Math.random() * 15 + 10; // Increment by 10-25% each time
+      
+      if (currentProgress >= 100) {
+        currentProgress = 100;
+        clearInterval(interval);
+      }
+      
+      setUploadQueue(prev => prev.map(file => {
+        if (file.id === fileId) {
+          return { 
+            ...file, 
+            progress: currentProgress, 
+            status: currentProgress >= 100 ? 'completed' : 'uploading'
+          };
+        }
+        return file;
+      }));
+    }, 300);
+  };
+
+  const handleEditVideo = (fileId: string) => {
+    // Navigate to individual video editor
+    // This would open a single-video wizard for the specific file
+    console.log('Edit video:', fileId);
+  };
+
+  const handleRemoveFile = (fileId: string) => {
+    setUploadQueue(prev => prev.filter(file => file.id !== fileId));
+  };
+
 
   return (
     <div className="flex h-screen bg-[#0a0a0f]">
@@ -58,14 +149,29 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
         {/* Profile */}
         <div className="px-6 pt-6 pb-6 flex flex-col items-center">
-          <button className="relative group">
-            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center shadow-lg">
-              <UserCircleIcon className="w-14 h-14 text-white" />
+          <div className="relative group">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePictureChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              title="Change profile picture"
+            />
+            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center shadow-lg overflow-hidden">
+              {profilePicture ? (
+                <img 
+                  src={profilePicture} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <UserCircleIcon className="w-14 h-14 text-white" />
+              )}
             </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gray-800 rounded-full border-2 border-[#0a0a0f] flex items-center justify-center group-hover:bg-gray-700 transition-colors">
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gray-800 rounded-full border-2 border-[#0a0a0f] flex items-center justify-center group-hover:bg-gray-700 transition-colors pointer-events-none">
               <PencilIcon className="w-4 h-4 text-gray-400 group-hover:text-white" />
             </div>
-          </button>
+          </div>
           <div className="mt-4 text-center">
             <p className="text-lg font-semibold text-white">Your channel</p>
             <p className="text-sm text-gray-500">Fred A</p>
@@ -109,24 +215,19 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
         {/* Upload and Notification */}
         <div className="px-4 pb-4 flex gap-3">
-          <Link href="/upload" className="flex-1">
-            <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg">
-              <CloudArrowUpIcon className="w-5 h-5" />
-              <span className="text-sm">Upload</span>
-            </button>
-          </Link>
-          <Link href="/settings">
-            <button
-              className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0",
-                pathname === "/settings"
-                  ? "bg-gray-800/70 text-white border border-gray-400/40"
-                  : "bg-gray-800/50 hover:bg-gray-800/70 text-gray-400 hover:text-white"
-              )}
-            >
-              <CogIcon className="w-5 h-5" />
-            </button>
-          </Link>
+          <button 
+            onClick={() => setShowUploadModal(true)}
+            className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg"
+          >
+            <CloudArrowUpIcon className="w-5 h-5" />
+            <span className="text-sm">Upload</span>
+          </button>
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 bg-gray-800/50 hover:bg-gray-800/70 text-gray-400 hover:text-white"
+          >
+            <CogIcon className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Profile */}
@@ -157,6 +258,395 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-[#0a0a0f]">{children}</main>
       </div>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowUploadModal(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative w-full max-w-4xl h-[85vh] bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            {/* Animated Background */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/2 -left-24 w-48 h-48 bg-gradient-to-r from-indigo-300 to-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
+              <div className="absolute bottom-1/3 -right-24 w-48 h-48 bg-gradient-to-r from-pink-300 to-rose-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float-delayed"></div>
+            </div>
+
+            {/* Upload Wizard */}
+            <div className="relative z-10 flex-1 flex flex-col min-h-0">
+              <UploadWizard 
+                onClose={() => setShowUploadModal(false)}
+                onMultipleUploads={handleMultipleUploads}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowSettingsModal(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 rounded-3xl shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="relative z-10 p-6 border-b border-white/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <CogIcon className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
+                    <p className="text-gray-600">Manage your account and preferences</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSettingsModal(false)}
+                  className="p-2 hover:bg-gray-100/50 rounded-full transition-colors"
+                >
+                  <XMarkIcon className="w-6 h-6 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="relative z-10 p-6 overflow-y-auto max-h-[70vh]">
+              <SettingsModalContent onClose={() => setShowSettingsModal(false)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Progress Tracker */}
+      <UploadProgressTracker
+        files={uploadQueue}
+        onClose={() => setShowProgressTracker(false)}
+        onEditVideo={handleEditVideo}
+        onRemoveFile={handleRemoveFile}
+        isVisible={showProgressTracker}
+      />
+    </div>
+  );
+}
+
+
+// Settings Modal Content Component
+function SettingsModalContent({ onClose }: { onClose: () => void }) {
+  const [activeTab, setActiveTab] = useState("general");
+  
+  // Upload defaults state
+  const [visibility, setVisibility] = useState("public");
+  const [category, setCategory] = useState("entertainment");
+  const [language, setLanguage] = useState("en");
+  
+  // General settings state
+  const [currency, setCurrency] = useState("USD");
+  const [autoSaveDrafts, setAutoSaveDrafts] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  
+  // Upload defaults toggles
+  const [enableMonetization, setEnableMonetization] = useState(false);
+  const [autoGenerateSubtitles, setAutoGenerateSubtitles] = useState(true);
+  
+  // Permissions toggles
+  const [allowComments, setAllowComments] = useState(true);
+  const [allowLikesDislikes, setAllowLikesDislikes] = useState(true);
+  const [allowEmbedding, setAllowEmbedding] = useState(true);
+  const [showSubscriberCount, setShowSubscriberCount] = useState(false);
+  const [commentModeration, setCommentModeration] = useState("none");
+
+  const currencyOptions = [
+    { value: "USD", label: "USD ($)", icon: "🇺🇸" },
+    { value: "EUR", label: "EUR (€)", icon: "🇪🇺" },
+    { value: "GBP", label: "GBP (£)", icon: "🇬🇧" },
+    { value: "CAD", label: "CAD (C$)", icon: "🇨🇦" },
+    { value: "AUD", label: "AUD (A$)", icon: "🇦🇺" },
+    { value: "JPY", label: "JPY (¥)", icon: "🇯🇵" },
+    { value: "KRW", label: "KRW (₩)", icon: "🇰🇷" },
+    { value: "CNY", label: "CNY (¥)", icon: "🇨🇳" },
+    { value: "INR", label: "INR (₹)", icon: "🇮🇳" },
+    { value: "BRL", label: "BRL (R$)", icon: "🇧🇷" }
+  ];
+
+  const visibilityOptions = [
+    { value: "public", label: "Public - Everyone can see", icon: "🌍" },
+    { value: "unlisted", label: "Unlisted - Only with link", icon: "🔗" },
+    { value: "private", label: "Private - Only you", icon: "🔒" }
+  ];
+
+  const categoryOptions = [
+    { value: "entertainment", label: "Entertainment", icon: "🎬" },
+    { value: "education", label: "Education", icon: "📚" },
+    { value: "gaming", label: "Gaming", icon: "🎮" },
+    { value: "music", label: "Music", icon: "🎵" },
+    { value: "technology", label: "Technology", icon: "💻" },
+    { value: "lifestyle", label: "Lifestyle", icon: "✨" },
+    { value: "sports", label: "Sports", icon: "⚽" },
+    { value: "news", label: "News & Politics", icon: "📰" }
+  ];
+
+  const languageOptions = [
+    { value: "en", label: "English", icon: "🇺🇸" },
+    { value: "es", label: "Spanish", icon: "🇪🇸" },
+    { value: "fr", label: "French", icon: "🇫🇷" },
+    { value: "de", label: "German", icon: "🇩🇪" },
+    { value: "it", label: "Italian", icon: "🇮🇹" },
+    { value: "pt", label: "Portuguese", icon: "🇧🇷" },
+    { value: "ja", label: "Japanese", icon: "🇯🇵" },
+    { value: "ko", label: "Korean", icon: "🇰🇷" },
+    { value: "zh", label: "Chinese", icon: "🇨🇳" },
+    { value: "hi", label: "Hindi", icon: "🇮🇳" }
+  ];
+
+  const commentModerationOptions = [
+    { value: "none", label: "No moderation", icon: "✅" },
+    { value: "hold_potentially_inappropriate", label: "Hold potentially inappropriate comments", icon: "⚠️" },
+    { value: "hold_all", label: "Hold all comments for review", icon: "🔒" }
+  ];
+
+  const tabs = [
+    { id: "general", name: "General", icon: "⚙️" },
+    { id: "channel", name: "Channel", icon: "📺" },
+    { id: "upload", name: "Upload defaults", icon: "📤" },
+    { id: "permissions", name: "Permissions", icon: "🔒" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Tabs */}
+      <div className="flex gap-2 p-1 bg-white/50 rounded-xl">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+              activeTab === tab.id
+                ? "bg-white text-purple-600 shadow-md"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <span>{tab.icon}</span>
+            {tab.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      <div className="relative">
+        <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-2xl blur-lg opacity-10"></div>
+        <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl p-6 border border-white/50 shadow-lg">
+          {activeTab === "general" && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">General Settings</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 mr-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                    <p className="text-sm text-gray-600">Choose your preferred currency for monetization and analytics</p>
+                  </div>
+                  <div className="w-40">
+                    <CustomDropdown
+                      options={currencyOptions}
+                      value={currency}
+                      onChange={setCurrency}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-gray-900">Auto-save drafts</span>
+                    <p className="text-sm text-gray-600">Automatically save your work as you edit</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={autoSaveDrafts}
+                    onChange={setAutoSaveDrafts}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-gray-900">Email notifications</span>
+                    <p className="text-sm text-gray-600">Receive updates about your channel via email</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={emailNotifications}
+                    onChange={setEmailNotifications}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {activeTab === "channel" && (
+            <ChannelSettingsSimple />
+          )}
+
+          {activeTab === "upload" && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Upload Defaults</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Default Visibility</label>
+                  <CustomDropdown
+                    options={visibilityOptions}
+                    value={visibility}
+                    onChange={setVisibility}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Default Category</label>
+                  <CustomDropdown
+                    options={categoryOptions}
+                    value={category}
+                    onChange={setCategory}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Default Language</label>
+                  <CustomDropdown
+                    options={languageOptions}
+                    value={language}
+                    onChange={setLanguage}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-gray-900">Enable monetization by default</span>
+                    <p className="text-sm text-gray-600">Automatically enable monetization for new uploads</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={enableMonetization}
+                    onChange={setEnableMonetization}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-gray-900">Auto-generate subtitles</span>
+                    <p className="text-sm text-gray-600">Automatically create subtitles for new uploads</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={autoGenerateSubtitles}
+                    onChange={setAutoGenerateSubtitles}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "permissions" && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Permissions</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-gray-900">Allow comments</span>
+                    <p className="text-sm text-gray-600">Let viewers comment on your videos</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={allowComments}
+                    onChange={setAllowComments}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-gray-900">Allow likes/dislikes</span>
+                    <p className="text-sm text-gray-600">Show like and dislike buttons on videos</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={allowLikesDislikes}
+                    onChange={setAllowLikesDislikes}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-gray-900">Allow embedding</span>
+                    <p className="text-sm text-gray-600">Let others embed your videos on their websites</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={allowEmbedding}
+                    onChange={setAllowEmbedding}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-gray-900">Show subscriber count</span>
+                    <p className="text-sm text-gray-600">Display your subscriber count publicly</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={showSubscriberCount}
+                    onChange={setShowSubscriberCount}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Comment moderation</label>
+                  <CustomDropdown
+                    options={commentModerationOptions}
+                    value={commentModeration}
+                    onChange={setCommentModeration}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <button 
+          onClick={onClose}
+          className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+        >
+          Save Changes
+        </button>
+        <button 
+          onClick={onClose}
+          className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
+        >
+          Cancel
+        </button>
+      </div>
+
+      {/* Add CSS for animations */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0) rotate(0deg);
+          }
+          33% {
+            transform: translateY(-20px) rotate(5deg);
+          }
+          66% {
+            transform: translateY(10px) rotate(-5deg);
+          }
+        }
+        @keyframes float-delayed {
+          0%, 100% {
+            transform: translateY(0) rotate(0deg);
+          }
+          33% {
+            transform: translateY(15px) rotate(-5deg);
+          }
+          66% {
+            transform: translateY(-25px) rotate(5deg);
+          }
+        }
+        .animate-float {
+          animation: float 8s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+          animation: float-delayed 8s ease-in-out infinite;
+          animation-delay: 2s;
+        }
+      `}</style>
     </div>
   );
 }
