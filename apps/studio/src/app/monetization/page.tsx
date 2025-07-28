@@ -24,7 +24,12 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   CreditCardIcon,
-  BuildingLibraryIcon
+  BuildingLibraryIcon,
+  XMarkIcon,
+  LightBulbIcon,
+  SparklesIcon,
+  AdjustmentsHorizontalIcon,
+  ArrowDownTrayIcon
 } from "@heroicons/react/24/outline";
 
 export default function MonetizationPage() {
@@ -32,6 +37,8 @@ export default function MonetizationPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedView, setSelectedView] = useState("overview");
   const [showSetupModal, setShowSetupModal] = useState(false);
+  const [showOptimizeModal, setShowOptimizeModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Revenue transactions data
   const transactions = [
@@ -239,11 +246,17 @@ export default function MonetizationPage() {
               <p className="text-gray-600">Manage your revenue streams and earnings</p>
             </div>
             <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:shadow-lg transition-all">
+              <button 
+                onClick={() => setShowOptimizeModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:shadow-lg transition-all"
+              >
                 <ArrowTrendingUpIcon className="w-4 h-4" />
                 Optimize Earnings
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white/90 transition-all">
+              <button 
+                onClick={() => setShowExportModal(true)}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white/90 transition-all"
+              >
                 <DocumentTextIcon className="w-4 h-4" />
                 Export Report
               </button>
@@ -295,7 +308,7 @@ export default function MonetizationPage() {
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">This Month</div>
-                        <div className="text-3xl font-bold text-gray-900 leading-none">$108.60</div>
+                        <div className="text-2xl font-bold text-gray-900 leading-none">$108.60</div>
                       </div>
                     </div>
                     <div className="text-right">
@@ -319,7 +332,7 @@ export default function MonetizationPage() {
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Subscribers</div>
-                        <div className="text-3xl font-bold text-gray-900 leading-none">169</div>
+                        <div className="text-2xl font-bold text-gray-900 leading-none">169</div>
                       </div>
                     </div>
                     <div className="text-right">
@@ -336,16 +349,16 @@ export default function MonetizationPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-orange-100 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                        <ChartBarIcon className="w-6 h-6 text-orange-600" />
+                        <PlayIcon className="w-6 h-6 text-orange-600" />
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Avg Transaction</div>
-                        <div className="text-3xl font-bold text-gray-900 leading-none">$18.10</div>
+                        <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Top Revenue Source</div>
+                        <div className="text-2xl font-bold text-gray-900 leading-none">Ad Revenue</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-orange-600 mb-1">6 total</div>
-                      <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">last 30 days</div>
+                      <div className="text-sm font-bold text-orange-600 mb-1">$68.60</div>
+                      <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">this month</div>
                     </div>
                   </div>
                 </div>
@@ -395,7 +408,7 @@ export default function MonetizationPage() {
                     placeholder="Search transactions..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 bg-white/90 backdrop-blur-xl border border-white/50 rounded-xl focus:ring-2 focus:ring-orange-300 focus:border-orange-300 shadow-sm transition-all w-64"
+                    className="pl-10 pr-4 py-2 bg-white/90 backdrop-blur-xl border border-white/50 rounded-xl focus:ring-2 focus:ring-orange-300 focus:border-orange-300 shadow-sm transition-all w-64 text-gray-900 placeholder-gray-500"
                   />
                 </div>
               </div>
@@ -484,69 +497,78 @@ export default function MonetizationPage() {
         {selectedView === "streams" && (
           <div className="space-y-6">
             {/* Revenue Stream Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
               {revenueStreams.map((stream) => (
                 <div key={stream.id} className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-amber-200/20 to-orange-200/20 rounded-2xl blur-lg"></div>
-                  <div className="relative bg-white/90 backdrop-blur-xl rounded-2xl border border-white/50 shadow-lg p-6">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-amber-200/20 to-orange-200/20 rounded-xl blur-lg"></div>
+                  <div className="relative bg-white/90 backdrop-blur-xl rounded-xl border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
                     
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${
+                    <div className="flex items-center justify-between">
+                      
+                      {/* Left side - Icon, Name, Description */}
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className={`p-3 rounded-lg ${
                           stream.status === "active" ? "bg-emerald-100" : "bg-gray-100"
                         }`}>
-                          <stream.icon className={`w-5 h-5 ${
+                          <stream.icon className={`w-6 h-6 ${
                             stream.status === "active" ? "text-emerald-600" : "text-gray-400"
                           }`} />
                         </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900">{stream.name}</h3>
-                          <p className="text-sm text-gray-500">{stream.description}</p>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold text-gray-900">{stream.name}</h3>
+                          <p className="text-sm text-gray-600">{stream.description}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          stream.status === "active" 
-                            ? "bg-emerald-100 text-emerald-700" 
-                            : "bg-gray-100 text-gray-600"
-                        }`}>
-                          {stream.status === "active" ? "Active" : "Setup Required"}
-                        </span>
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
+
+                      {/* Center - Revenue */}
+                      <div className="text-center px-6">
+                        <div className="text-2xl font-bold text-gray-900">{stream.revenue}</div>
+                        <div className="text-xs text-gray-500">This month</div>
+                      </div>
+
+                      {/* Right side - Status & Action */}
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            stream.status === "active" 
+                              ? "bg-emerald-100 text-emerald-700" 
+                              : "bg-gray-100 text-gray-600"
+                          }`}>
+                            {stream.status === "active" ? "Active" : "Setup Required"}
+                          </span>
+                          {stream.status === "active" && (
+                            <div className="flex items-center gap-1 mt-1 text-xs text-emerald-600">
+                              <CheckCircleIcon className="w-3 h-3" />
+                              <span>Earning</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {stream.status === "active" ? (
+                          <button className="px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors">
+                            Manage
+                          </button>
+                        ) : (
+                          <button className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium rounded-lg hover:shadow-lg transition-all">
+                            Set Up
+                          </button>
+                        )}
+                        
+                        <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
                           <EllipsisVerticalIcon className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Revenue */}
-                    <div className="mb-4">
-                      <div className="text-2xl font-bold text-gray-900 mb-1">{stream.revenue}</div>
-                      <div className="text-sm text-gray-500">This month</div>
-                    </div>
-
-                    {/* Requirements/Actions */}
-                    <div className="space-y-2">
-                      {stream.status === "active" ? (
-                        <div className="flex items-center gap-2 text-sm text-emerald-600">
-                          <CheckCircleIcon className="w-4 h-4" />
-                          <span>Earning revenue</span>
+                    {/* Setup Requirements - Only show for inactive streams */}
+                    {stream.status !== "active" && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium text-gray-700">Requirements: </span>
+                          {stream.requirements.join(" • ")}
                         </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-gray-700">Setup Requirements:</h4>
-                          {stream.requirements.map((req, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                              <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                              <span>{req}</span>
-                            </div>
-                          ))}
-                          <button className="w-full mt-3 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:shadow-lg transition-all">
-                            Set Up Now
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -864,6 +886,273 @@ export default function MonetizationPage() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Optimize Earnings Modal */}
+        {showOptimizeModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[85vh]">
+              <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-2xl blur opacity-20"></div>
+              <div className="relative bg-white/95 backdrop-blur-xl rounded-2xl border border-white/50 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+                
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 rounded-xl">
+                      <SparklesIcon className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">Optimize Your Earnings</h2>
+                  </div>
+                  <button 
+                    onClick={() => setShowOptimizeModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <XMarkIcon className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  
+                  {/* AI Recommendations */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <LightBulbIcon className="w-5 h-5 text-amber-500" />
+                      AI Recommendations
+                    </h3>
+                    
+                    <div className="space-y-3">
+                      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                            <ArrowTrendingUpIcon className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-emerald-900">Increase subscription price by $2</h4>
+                            <p className="text-sm text-emerald-700 mt-1">Based on your engagement rate, you could increase monthly revenue by ~$14</p>
+                            <button className="mt-2 px-3 py-1 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition-colors">
+                              Apply Change
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <CreditCardIcon className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-blue-900">Enable merchandise sales</h4>
+                            <p className="text-sm text-blue-700 mt-1">Similar creators earn an additional $25-40/month from merchandise</p>
+                            <button className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                              Set Up Now
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl">
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <ClockIcon className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-purple-900">Optimize posting schedule</h4>
+                            <p className="text-sm text-purple-700 mt-1">Post monetized content on Tuesdays at 3pm for 23% better performance</p>
+                            <button className="mt-2 px-3 py-1 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors">
+                              Schedule Posts
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <AdjustmentsHorizontalIcon className="w-5 h-5 text-blue-500" />
+                      Quick Optimizations
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-gray-900">Auto-optimize ads</h4>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" className="sr-only peer" />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                          </label>
+                        </div>
+                        <p className="text-sm text-gray-600">Let AI automatically adjust ad placements for maximum revenue</p>
+                      </div>
+
+                      <div className="p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium text-gray-900">Smart pricing</h4>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" className="sr-only peer" defaultChecked />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                          </label>
+                        </div>
+                        <p className="text-sm text-gray-600">Automatically adjust subscription prices based on demand</p>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Footer */}
+                <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Potential monthly increase:</span> +$39-55
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setShowOptimizeModal(false)}
+                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-white transition-colors"
+                      >
+                        Close
+                      </button>
+                      <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                        Apply All Recommendations
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Export Report Modal */}
+        {showExportModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="relative bg-white rounded-2xl max-w-lg w-full">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-2xl blur opacity-20"></div>
+              <div className="relative bg-white/95 backdrop-blur-xl rounded-2xl border border-white/50 shadow-2xl">
+                
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-xl">
+                      <DocumentTextIcon className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">Export Report</h2>
+                  </div>
+                  <button 
+                    onClick={() => setShowExportModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <XMarkIcon className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-6">
+                  
+                  {/* Date Range */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-bold text-gray-900">Date Range</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+                        <input 
+                          type="date" 
+                          defaultValue="2025-01-01"
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-300 text-gray-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+                        <input 
+                          type="date" 
+                          defaultValue="2025-01-28"
+                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-300 text-gray-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Report Type */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-bold text-gray-900">Report Type</h3>
+                    <div className="space-y-2">
+                      {[
+                        { id: "summary", label: "Revenue Summary", desc: "Overview of all earnings and key metrics" },
+                        { id: "detailed", label: "Detailed Transactions", desc: "Complete transaction history with sources" },
+                        { id: "analytics", label: "Performance Analytics", desc: "Revenue trends and growth analysis" },
+                        { id: "tax", label: "Tax Report", desc: "Tax-ready financial summary" }
+                      ].map((type) => (
+                        <label key={type.id} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                          <input 
+                            type="radio" 
+                            name="reportType" 
+                            value={type.id}
+                            defaultChecked={type.id === "summary"}
+                            className="mt-1"
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">{type.label}</div>
+                            <div className="text-sm text-gray-600">{type.desc}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Format */}
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-bold text-gray-900">Format</h3>
+                    <div className="flex gap-3">
+                      {[
+                        { id: "pdf", label: "PDF", icon: "📄" },
+                        { id: "csv", label: "CSV", icon: "📊" },
+                        { id: "excel", label: "Excel", icon: "📈" }
+                      ].map((format) => (
+                        <label key={format.id} className="flex-1 flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                          <input 
+                            type="radio" 
+                            name="format" 
+                            value={format.id}
+                            defaultChecked={format.id === "pdf"}
+                          />
+                          <span className="text-xl">{format.icon}</span>
+                          <span className="font-medium text-gray-900">{format.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      Report will be ready for download in ~30 seconds
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setShowExportModal(false)}
+                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-white transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <ArrowDownTrayIcon className="w-4 h-4" />
+                        Export
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>

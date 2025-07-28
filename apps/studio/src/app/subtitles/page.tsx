@@ -315,7 +315,7 @@ export default function SubtitlesPage() {
                     placeholder="Search videos..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 bg-white/90 backdrop-blur-xl border border-white/50 rounded-xl focus:ring-2 focus:ring-orange-300 focus:border-orange-300 shadow-sm transition-all w-64"
+                    className="pl-10 pr-4 py-2 bg-white/90 backdrop-blur-xl border border-white/50 rounded-xl focus:ring-2 focus:ring-orange-300 focus:border-orange-300 shadow-sm transition-all w-64 text-gray-900 placeholder-gray-500"
                   />
                 </div>
               </div>
