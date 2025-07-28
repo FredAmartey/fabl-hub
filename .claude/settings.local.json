@@ -37,7 +37,8 @@
       "mcp__playwright__browser_evaluate",
       "Bash(npm run typecheck:*)",
       "Bash(npm run:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }

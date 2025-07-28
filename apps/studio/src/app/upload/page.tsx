@@ -153,28 +153,24 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-gradient-to-r from-blue-300 to-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-gradient-to-r from-pink-300 to-orange-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float-delayed"></div>
+        <div className="absolute top-1/2 -left-48 w-96 h-96 bg-gradient-to-r from-indigo-300 to-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
+        <div className="absolute bottom-1/3 -right-48 w-96 h-96 bg-gradient-to-r from-pink-300 to-rose-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float-delayed"></div>
       </div>
 
-      <div className="relative z-10 p-8 lg:p-12 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
+      <div className="relative z-10 p-8 lg:p-12 max-w-6xl mx-auto">
+        {/* Enhanced Header */}
+        <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur-xl opacity-50"></div>
-                <div className="relative p-4 bg-gradient-to-br from-blue-500 to-purple-500 rounded-3xl">
-                  <CloudArrowUpIcon className="w-10 h-10 text-white" />
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="relative">
+                  <CloudArrowUpIcon className="w-8 h-8 text-purple-600" />
                 </div>
+                <h1 className="text-4xl font-bold text-gray-900">Upload</h1>
               </div>
-              <div>
-                <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                  Upload Studio
-                </h1>
-                <p className="text-xl text-gray-600 font-light mt-1">Share your creativity with the world</p>
-              </div>
-              <span className="text-4xl ml-4">🚀</span>
+              <p className="text-lg text-gray-600">
+                Share your creativity with the world
+              </p>
             </div>
             
             {/* Progress Steps */}
@@ -220,8 +216,8 @@ export default function UploadPage() {
               onDragOver={handleDrag}
               onDrop={handleDrop}
             >
-              <div className={`absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-3xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity ${
-                dragActive ? "opacity-70" : ""
+              <div className={`absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-2xl blur-lg opacity-10 group-hover:opacity-20 transition-opacity ${
+                dragActive ? "opacity-30" : ""
               }`}></div>
               
               <div className={`relative bg-white/80 backdrop-blur-xl rounded-3xl border-4 border-dashed transition-all duration-300 ${
@@ -292,7 +288,7 @@ export default function UploadPage() {
                   
                   return (
                     <div key={file.id} className="group relative">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-3xl blur-lg opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                      <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-2xl blur-lg opacity-10"></div>
                       
                       <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/50 shadow-lg">
                         <div className="flex items-center gap-6">
@@ -382,7 +378,7 @@ export default function UploadPage() {
             <div className="lg:col-span-2 space-y-8">
               {/* Basic Info */}
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-3xl blur-lg opacity-10"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-2xl blur-lg opacity-10"></div>
                 <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-white/50 shadow-lg">
                   <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                     <span className="text-3xl">📝</span>
@@ -442,7 +438,7 @@ export default function UploadPage() {
 
               {/* Settings */}
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-3xl blur-lg opacity-10"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-2xl blur-lg opacity-10"></div>
                 <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-white/50 shadow-lg">
                   <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                     <span className="text-3xl">⚙️</span>
@@ -503,7 +499,7 @@ export default function UploadPage() {
             <div className="space-y-6">
               {/* Preview */}
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-3xl blur-lg opacity-20"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-2xl blur-lg opacity-10"></div>
                 <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/50 shadow-lg">
                   <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <EyeIcon className="w-6 h-6" />
@@ -527,7 +523,7 @@ export default function UploadPage() {
               
               {/* Quick Tips */}
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 to-orange-400 rounded-3xl blur-lg opacity-20"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-2xl blur-lg opacity-10"></div>
                 <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl p-6 border border-white/50 shadow-lg">
                   <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <SparklesIcon className="w-6 h-6" />

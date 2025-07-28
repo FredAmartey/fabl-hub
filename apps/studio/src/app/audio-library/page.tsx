@@ -41,11 +41,15 @@ export default function AudioLibraryPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100">
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 -left-48 w-96 h-96 bg-gradient-to-r from-blue-300 to-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
-        <div className="absolute bottom-1/3 -right-48 w-96 h-96 bg-gradient-to-r from-purple-300 to-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float-delayed"></div>
+        {/* Central pulsing effect */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-blue-200/30 via-blue-300/20 to-transparent rounded-full animate-pulse-soft"></div>
+        
+        {/* Floating orbs */}
+        <div className="absolute top-1/2 -left-48 w-96 h-96 bg-gradient-to-r from-blue-300/40 to-indigo-300/40 rounded-full mix-blend-multiply filter blur-3xl animate-float"></div>
+        <div className="absolute bottom-1/3 -right-48 w-96 h-96 bg-gradient-to-r from-indigo-300/40 to-blue-400/40 rounded-full mix-blend-multiply filter blur-3xl animate-float-delayed"></div>
       </div>
 
       <div className="relative z-10 p-8 lg:p-12 max-w-6xl mx-auto">
@@ -134,12 +138,28 @@ export default function AudioLibraryPage() {
               transform: translateY(-25px) rotate(5deg);
             }
           }
+          @keyframes pulse-soft {
+            0%, 100% {
+              opacity: 0.15;
+              transform: translate(-50%, -50%) scale(1);
+            }
+            50% {
+              opacity: 0.25;
+              transform: translate(-50%, -50%) scale(1.1);
+            }
+          }
           .animate-float {
             animation: float 8s ease-in-out infinite;
           }
           .animate-float-delayed {
             animation: float-delayed 8s ease-in-out infinite;
             animation-delay: 2s;
+          }
+          .animate-pulse-soft {
+            animation: pulse-soft 4s ease-in-out infinite;
+          }
+          .bg-gradient-radial {
+            background: radial-gradient(circle, var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to));
           }
         `}</style>
       </div>
