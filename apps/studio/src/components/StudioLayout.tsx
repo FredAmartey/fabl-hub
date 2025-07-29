@@ -21,6 +21,12 @@ import {
   CogIcon,
   PencilIcon,
   XMarkIcon,
+  ArrowLeftOnRectangleIcon,
+  ArrowsRightLeftIcon,
+  ExclamationCircleIcon,
+  ComputerDesktopIcon,
+  ChatBubbleLeftEllipsisIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import ChannelSettingsSimple from "./ChannelSettingsSimple";
 import CustomDropdown from "./CustomDropdown";
@@ -57,6 +63,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
   const [uploadQueue, setUploadQueue] = useState<UploadFile[]>([]);
   const [showProgressTracker, setShowProgressTracker] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Lock body scroll when modal is open
   React.useEffect(() => {
@@ -70,6 +77,19 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
       document.body.style.overflow = 'unset';
     };
   }, [showUploadModal, showSettingsModal]);
+
+  // Close user menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (showUserMenu && !target.closest('[data-user-menu]')) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserMenu]);
 
   const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -249,6 +269,13 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
               <p className="text-sm font-semibold text-white"> Studio</p>
               <p className="text-xs text-gray-500">All systems operational</p>
             </div>
+            {/* Sign Out Button */}
+            <button 
+              className="p-3 hover:bg-gray-800/30 rounded-xl transition-all duration-200 text-gray-400 hover:text-white"
+              title="Sign Out"
+            >
+              <ArrowLeftOnRectangleIcon className="w-6 h-6" />
+            </button>
           </div>
         </div>
       </aside>
@@ -256,7 +283,94 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-[#0a0a0f]">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-[#0a0a0f] relative">{children}</main>
+        
+        {/* Floating User Menu */}
+        <div className="fixed top-6 right-6 z-50" data-user-menu>
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 border-2 border-white/20"
+            >
+              {profilePicture ? (
+                <img 
+                  src={profilePicture} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <UserCircleIcon className="w-6 h-6 text-white" />
+              )}
+            </button>
+            
+            {showUserMenu && (
+              <div className="absolute top-full right-0 mt-2 w-64 bg-white/95 backdrop-blur-xl border border-white/50 rounded-2xl shadow-2xl overflow-hidden">
+                {/* User Info */}
+                <div className="p-4 border-b border-gray-200/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center flex-shrink-0">
+                      {profilePicture ? (
+                        <img 
+                          src={profilePicture} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <UserCircleIcon className="w-5 h-5 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">Fred A</p>
+                      <p className="text-xs text-gray-500 truncate">@Fred-xh7gl</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Menu Items */}
+                <div className="py-2">
+                  <button className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3">
+                    <UserCircleIcon className="w-4 h-4 text-gray-500" />
+                    Your channel
+                  </button>
+                  
+                  <button className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3">
+                    <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-500" />
+                    Go to fabl.tv
+                  </button>
+                  
+                  <button className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3">
+                    <ArrowsRightLeftIcon className="w-4 h-4 text-gray-500" />
+                    Switch account
+                  </button>
+                  
+                  <div className="border-t border-gray-200/50 my-2"></div>
+                  
+                  <button className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3">
+                    <ArrowLeftOnRectangleIcon className="w-4 h-4 text-gray-500" />
+                    Sign out
+                  </button>
+                  
+                  <div className="border-t border-gray-200/50 my-2"></div>
+                  
+                  <div className="px-4 py-2">
+                    <p className="text-xs font-medium text-gray-500 mb-2">Appearance: Device theme</p>
+                    <div className="flex items-center gap-2">
+                      <ComputerDesktopIcon className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs text-gray-600">Device theme</span>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-gray-200/50 my-2"></div>
+                  
+                  <button className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3">
+                    <ChatBubbleLeftEllipsisIcon className="w-4 h-4 text-gray-500" />
+                    Send feedback
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Upload Modal */}

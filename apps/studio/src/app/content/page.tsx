@@ -18,6 +18,7 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
   XMarkIcon,
+  LockClosedIcon,
   EllipsisVerticalIcon,
   ChartBarIcon,
   PencilIcon,
@@ -260,7 +261,7 @@ export default function ContentPage() {
       case "unlisted":
         return { label: "UNLISTED", color: "bg-orange-500/20 text-orange-300", icon: EyeIcon };
       case "private":
-        return { label: "PRIVATE", color: "bg-gray-500/20 text-gray-300", icon: XMarkIcon };
+        return { label: "PRIVATE", color: "bg-gray-500/20 text-gray-300", icon: LockClosedIcon };
       case "scheduled":
         return { label: "SCHEDULED", color: "bg-blue-500/20 text-blue-300", icon: CalendarIcon };
       case "draft":
@@ -271,11 +272,20 @@ export default function ContentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-200 to-indigo-100">
-      {/* Cool Animated Background */}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-200 to-violet-300">
+      {/* Ethereal Galaxy Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-48 w-96 h-96 bg-gradient-to-r from-blue-300/40 to-purple-300/40 rounded-full mix-blend-multiply filter blur-3xl animate-float"></div>
-        <div className="absolute bottom-1/3 -right-48 w-96 h-96 bg-gradient-to-r from-purple-300/40 to-indigo-300/40 rounded-full mix-blend-multiply filter blur-3xl animate-float-delayed"></div>
+        {/* Galaxy center */}
+        <div className="absolute top-1/2 left-1/2 w-[800px] h-[600px] galaxy-core rounded-full filter blur-3xl animate-pulse" style={{transform: 'translate(-50%, -50%)', animationDuration: '12s'}}></div>
+        
+        {/* Nebula clouds */}
+        <div className="absolute top-1/6 right-1/4 w-[500px] h-[400px] bg-gradient-to-r from-violet-300/25 to-purple-400/20 rounded-full mix-blend-multiply filter blur-3xl animate-float" style={{animationDuration: '15s'}}></div>
+        <div className="absolute bottom-1/4 left-1/5 w-[400px] h-[500px] bg-gradient-to-r from-purple-400/20 to-indigo-300/15 rounded-full mix-blend-multiply filter blur-3xl animate-float-delayed" style={{animationDuration: '18s'}}></div>
+        
+        
+        {/* Cosmic dust streams */}
+        <div className="absolute top-1/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-violet-300/30 to-transparent transform rotate-12"></div>
+        <div className="absolute bottom-1/3 left-0 w-full h-px bg-gradient-to-r from-transparent via-purple-300/25 to-transparent transform -rotate-12"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -989,6 +999,9 @@ export default function ContentPage() {
 
         {/* Add CSS for animations */}
         <style jsx>{`
+          .galaxy-core {
+            background: radial-gradient(ellipse, rgba(147, 51, 234, 0.3) 0%, rgba(139, 92, 246, 0.2) 30%, rgba(124, 58, 237, 0.1) 60%, transparent 100%);
+          }
           @keyframes float {
             0%, 100% {
               transform: translateY(0) rotate(0deg);
