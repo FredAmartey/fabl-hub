@@ -468,7 +468,7 @@ export default function CommentsPage() {
         {/* Clean Comments List - YouTube Style */}
         <div className="relative">
           <div className="absolute -inset-1 bg-gradient-to-r from-indigo-200/20 to-purple-200/20 rounded-2xl blur-lg"></div>
-          <div className="relative rounded-2xl border border-white/50 shadow-lg overflow-hidden" style={{backgroundColor: '#FFFAF0'}}>
+          <div className="relative rounded-2xl border border-white/50 shadow-lg overflow-hidden" style={{backgroundColor: '#FFFAFA'}}>
             
             {/* Header with bulk selection */}
             {selectedComments.length > 0 && (

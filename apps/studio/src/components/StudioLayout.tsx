@@ -33,9 +33,9 @@ const navigationItems = [
   { name: "Content", href: "/content", icon: PlayIcon },
   { name: "Playlists", href: "/playlists", icon: FolderIcon },
   { name: "Analytics", href: "/analytics", icon: ChartBarIcon },
+  { name: "Monetization", href: "/monetization", icon: CurrencyDollarIcon },
   { name: "Comments", href: "/comments", icon: ChatBubbleLeftRightIcon },
   { name: "Subtitles", href: "/subtitles", icon: LanguageIcon },
-  { name: "Monetization", href: "/monetization", icon: CurrencyDollarIcon },
   { name: "Customization", href: "/customization", icon: PaintBrushIcon },
   { name: "Audio Library", href: "/audio-library", icon: MusicalNoteIcon },
 ];
