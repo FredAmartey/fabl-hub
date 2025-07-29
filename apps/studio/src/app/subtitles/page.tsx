@@ -246,7 +246,7 @@ export default function SubtitlesPage() {
                   <LanguageIcon className="w-8 h-8 text-orange-600" />
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
                 </div>
-                <h1 className="text-4xl font-bold text-gray-900">Channel subtitles</h1>
+                <h1 className="text-4xl font-bold text-gray-900">Subtitles</h1>
               </div>
               <p className="text-lg text-gray-600">
                 Manage subtitles across {videos.length} videos • {videos.filter(v => v.languageCount > 0).length} have subtitles

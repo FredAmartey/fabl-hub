@@ -33,6 +33,7 @@ import CustomDropdown from "./CustomDropdown";
 import ToggleSwitch from "./ToggleSwitch";
 import UploadWizard from "./UploadWizard";
 import UploadProgressTracker from "./UploadProgressTracker";
+import { UploadProvider } from "../contexts/UploadContext";
 
 const navigationItems = [
   { name: "Dashboard", href: "/", icon: HomeIcon },
@@ -77,6 +78,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
       document.body.style.overflow = 'unset';
     };
   }, [showUploadModal, showSettingsModal]);
+
 
   // Close user menu when clicking outside
   React.useEffect(() => {
@@ -269,13 +271,6 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
               <p className="text-sm font-semibold text-white"> Studio</p>
               <p className="text-xs text-gray-500">All systems operational</p>
             </div>
-            {/* Sign Out Button */}
-            <button 
-              className="p-3 hover:bg-gray-800/30 rounded-xl transition-all duration-200 text-gray-400 hover:text-white"
-              title="Sign Out"
-            >
-              <ArrowLeftOnRectangleIcon className="w-6 h-6" />
-            </button>
           </div>
         </div>
       </aside>
@@ -283,24 +278,32 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-[#0a0a0f] relative">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-[#0a0a0f] relative">
+          <UploadProvider openUploadModal={() => setShowUploadModal(true)}>
+            {children}
+          </UploadProvider>
+        </main>
         
         {/* Floating User Menu */}
         <div className="fixed top-6 right-6 z-50" data-user-menu>
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 border-2 border-white/20"
+              className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 relative overflow-hidden"
             >
-              {profilePicture ? (
-                <img 
-                  src={profilePicture} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover rounded-full"
-                />
-              ) : (
-                <UserCircleIcon className="w-6 h-6 text-white" />
-              )}
+              <div className="absolute inset-0 rounded-full bg-white p-0.5">
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center">
+                  {profilePicture ? (
+                    <img 
+                      src={profilePicture} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <UserCircleIcon className="w-6 h-6 text-white" />
+                  )}
+                </div>
+              </div>
             </button>
             
             {showUserMenu && (
@@ -308,12 +311,12 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                 {/* User Info */}
                 <div className="p-4 border-b border-gray-200/50">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {profilePicture ? (
                         <img 
                           src={profilePicture} 
                           alt="Profile" 
-                          className="w-full h-full object-cover rounded-full"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <UserCircleIcon className="w-5 h-5 text-white" />

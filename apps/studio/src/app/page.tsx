@@ -23,8 +23,10 @@ import {
   PlusIcon,
   CogIcon,
 } from "@heroicons/react/24/outline";
+import { useUpload } from "../contexts/UploadContext";
 
 export default function StudioDashboard() {
+  const { openUploadModal } = useUpload();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -185,7 +187,10 @@ export default function StudioDashboard() {
                 <div className="h-full flex flex-col">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
                   <div className="flex-1 flex flex-col justify-center space-y-3 min-h-0">
-                    <button className="w-full flex items-center gap-3 p-2.5 bg-white/50 hover:bg-white/70 rounded-xl transition-colors text-left">
+                    <button 
+                      onClick={openUploadModal}
+                      className="w-full flex items-center gap-3 p-2.5 bg-white/50 hover:bg-white/70 rounded-xl transition-colors text-left hover:shadow-md"
+                    >
                       <div className="p-2 bg-violet-500 rounded-lg flex-shrink-0">
                         <RocketLaunchIcon className="w-4 h-4 text-white" />
                       </div>
@@ -228,25 +233,36 @@ export default function StudioDashboard() {
 
                 <div className="space-y-4">
                   {[
-                    { title: "Garen R cast time", views: "1.2K views" },
-                    { title: "How to ward baron properly", views: "847 views" },
-                    { title: "Best support builds Season 14", views: "2.1K views" },
+                    { title: "Best support builds Season 14", views: "2.1K views", metric: "Most watched", rank: "#1" },
+                    { title: "Garen R cast time", views: "1.2K views", metric: "High engagement", rank: "#2" },
+                    { title: "How to ward baron properly", views: "847 views", metric: "Rising fast", rank: "#3" },
                   ].map((video, i) => (
                     <div
                       key={i}
-                      className="group/video bg-white/50 hover:bg-white/70 rounded-2xl p-5 transition-all cursor-pointer"
+                      className="group/video bg-white/50 hover:bg-white/70 rounded-2xl p-5 transition-all cursor-pointer hover:shadow-md"
                     >
                       <div className="flex items-start gap-4">
                         <div className="relative flex-shrink-0">
                           <div className="w-20 h-14 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
                             <PlayIcon className="w-6 h-6 text-gray-500" />
                           </div>
+                          <div className="absolute -top-2 -left-2 w-6 h-6 bg-pink-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                            {video.rank}
+                          </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-gray-900 text-lg leading-tight">
+                          <h4 className="font-semibold text-gray-900 text-lg leading-tight group-hover/video:text-pink-600 transition-colors">
                             {video.title}
                           </h4>
-                          <p className="text-base text-gray-600 mt-1">{video.views}</p>
+                          <div className="flex items-center gap-4 mt-1">
+                            <p className="text-base text-gray-600">{video.views}</p>
+                            <p className="text-sm text-blue-600 font-medium">{video.metric}</p>
+                          </div>
+                        </div>
+                        <div className="opacity-0 group-hover/video:opacity-100 transition-opacity">
+                          <button className="p-2 hover:bg-pink-100 rounded-lg transition-colors" title="View Analytics">
+                            <ChartBarIcon className="w-5 h-5 text-gray-500" />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -496,6 +512,7 @@ export default function StudioDashboard() {
           }
         `}</style>
       </div>
+
     </div>
   );
 }

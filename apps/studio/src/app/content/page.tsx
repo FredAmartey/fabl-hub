@@ -29,6 +29,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
+import { useUpload } from "../../contexts/UploadContext";
 
 // Generate more realistic video data
 const generateMockVideos = () => {
@@ -104,6 +105,7 @@ const generateMockVideos = () => {
 const mockVideos = generateMockVideos();
 
 export default function ContentPage() {
+  const { openUploadModal } = useUpload();
   const [selectedVideos, setSelectedVideos] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("list");
@@ -179,14 +181,7 @@ export default function ContentPage() {
   };
 
   const handleUploadClick = () => {
-    // Trigger the upload modal from the parent StudioLayout
-    const uploadButton = document.querySelector('[data-upload-trigger]') as HTMLButtonElement;
-    if (uploadButton) {
-      uploadButton.click();
-    } else {
-      // Fallback: dispatch a custom event that StudioLayout can listen to
-      window.dispatchEvent(new CustomEvent('openUploadModal'));
-    }
+    openUploadModal();
   };
 
   const handleDropdownToggle = (videoId: number, event: React.MouseEvent) => {

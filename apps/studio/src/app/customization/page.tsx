@@ -135,7 +135,7 @@ export default function CustomizationPage() {
                 <div className="relative">
                   <PaintBrushIcon className="w-8 h-8 text-purple-600" />
                 </div>
-                <h1 className="text-4xl font-bold text-gray-900">Channel customization</h1>
+                <h1 className="text-4xl font-bold text-gray-900">Customization</h1>
               </div>
               <p className="text-lg text-gray-600">
                 Customize your channel's appearance and information
