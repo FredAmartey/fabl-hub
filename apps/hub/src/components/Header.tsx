@@ -2,10 +2,8 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   MenuIcon,
-  SearchIcon,
   BellIcon,
   UserIcon,
   UploadIcon,
@@ -16,37 +14,31 @@ import {
   ThumbsUpIcon,
   MessageCircleIcon,
   UserPlusIcon,
-  PlayIcon,
   ChevronRightIcon,
   VideoIcon,
+  Loader2Icon,
 } from "lucide-react";
 import { Button } from "./Button";
+import { SearchBox } from "./SearchBox";
+import { useUser } from "@/hooks/api/use-user";
+import { useNotifications, useMarkNotificationRead } from "@/hooks/api/use-notifications";
+import { formatDate } from "@fabl/utils";
 
 interface HeaderProps {
   onMenuClick: () => void;
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchFocused(false);
-    }
-  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -65,77 +57,41 @@ export function Header({ onMenuClick }: HeaderProps) {
     };
   }, []);
 
-  // Sample notifications for the dropdown
-  const recentNotifications = [
-    {
-      id: 1,
-      type: "like",
-      user: {
-        name: "Maya Rivera",
-        avatar:
-          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&auto=format&fit=crop&crop=faces",
-        id: "mayarivera",
-      },
-      content: "liked your video",
-      video: {
-        id: 101,
-        title: "Creating Digital Art with Neural Style Transfer",
-        thumbnail:
-          "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop",
-      },
-      timestamp: "2 hours ago",
-      read: false,
-    },
-    {
-      id: 2,
-      type: "comment",
-      user: {
-        name: "Alex Johnson",
-        avatar:
-          "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&auto=format&fit=crop&crop=faces",
-        id: "alexjohnson",
-      },
-      content: "commented on your video",
-      comment: "This is absolutely mind-blowing! The AI has captured the essence perfectly.",
-      video: {
-        id: 101,
-        title: "Creating Digital Art with Neural Style Transfer",
-        thumbnail:
-          "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop",
-      },
-      timestamp: "5 hours ago",
-      read: false,
-    },
-    {
-      id: 3,
-      type: "subscribe",
-      user: {
-        name: "Sophia Chen",
-        avatar:
-          "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&auto=format&fit=crop&crop=faces",
-        id: "sophiachen",
-      },
-      content: "subscribed to your channel",
-      timestamp: "1 day ago",
-      read: true,
-    },
-  ];
+  // Fetch user data and notifications
+  const { data: user, isLoading: userLoading } = useUser();
+  const { data: notifications, isLoading: notificationsLoading } = useNotifications();
+  const markAsRead = useMarkNotificationRead();
+
+  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case "like":
+      case "LIKE":
         return <ThumbsUpIcon className="w-4 h-4 text-red-400" />;
-      case "comment":
+      case "COMMENT":
         return <MessageCircleIcon className="w-4 h-4 text-blue-400" />;
-      case "subscribe":
+      case "SUBSCRIBE":
         return <UserPlusIcon className="w-4 h-4 text-green-400" />;
-      case "mention":
+      case "MENTION":
         return <MessageCircleIcon className="w-4 h-4 text-purple-400" />;
-      case "upload":
+      case "UPLOAD":
         return <VideoIcon className="w-4 h-4 text-yellow-400" />;
       default:
         return <BellIcon className="w-4 h-4 text-gray-400" />;
     }
+  };
+
+  const handleNotificationClick = (notificationId: string) => {
+    markAsRead.mutate(notificationId);
+    setNotificationsOpen(false);
+    // Navigate to related content if needed
+  };
+
+  const handleMarkAllAsRead = () => {
+    notifications?.filter(n => !n.read).forEach(n => {
+      markAsRead.mutate(n.id);
+    });
   };
 
   return (
@@ -149,76 +105,32 @@ export function Header({ onMenuClick }: HeaderProps) {
             <MenuIcon className="w-6 h-6" />
           </button>
           <Link href="/" prefetch={true} className="flex items-center">
-            <span className="text-3xl font-bold font-afacad bg-gradient-to-r from-purple-500 to-blue-400 bg-clip-text text-transparent">
-              fabl<span className="text-white">.tv</span>
+            <span className="text-3xl font-bold font-afacad">
+              <span
+                style={{
+                  background: "linear-gradient(90deg, #6366f1, #a855f7, #ec4899)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                fabl
+              </span>
+              <span className="text-white">.tv</span>
             </span>
             <SparklesIcon className="w-5 h-5 ml-1 text-purple-400 animate-pulse" />
           </Link>
         </div>
 
-        <form
-          onSubmit={handleSearch}
-          className={`flex-1 max-w-2xl mx-4 relative ${
-            searchFocused ? "scale-105" : ""
-          } transition-transform duration-150`}
-        >
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search for magical content..."
-              className="w-full bg-[#1a1230] border border-purple-500/30 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors transition-[border-color] transition-[box-shadow] duration-200"
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-purple-400 transition-colors"
-            >
-              <SearchIcon className="w-5 h-5" />
-            </button>
-          </div>
-          {mounted && searchFocused && (
-            <div className="absolute top-full mt-2 w-full bg-[#1a1230] rounded-xl border border-purple-500/30 p-2 shadow-lg shadow-purple-500/20">
-              <div className="text-sm text-gray-400 px-3 py-1">Try searching for:</div>
-              <div
-                className="hover:bg-purple-500/20 px-3 py-2 rounded-lg cursor-pointer transition-colors"
-                onClick={() => {
-                  setSearchQuery("AI Generated Music Videos");
-                  router.push("/search?q=AI%20Generated%20Music%20Videos");
-                  setSearchFocused(false);
-                }}
-              >
-                AI Generated Music Videos
-              </div>
-              <div
-                className="hover:bg-purple-500/20 px-3 py-2 rounded-lg cursor-pointer transition-colors"
-                onClick={() => {
-                  setSearchQuery("Synthetic Storytelling");
-                  router.push("/search?q=Synthetic%20Storytelling");
-                  setSearchFocused(false);
-                }}
-              >
-                Synthetic Storytelling
-              </div>
-              <div
-                className="hover:bg-purple-500/20 px-3 py-2 rounded-lg cursor-pointer transition-colors"
-                onClick={() => {
-                  setSearchQuery("Neural Dreams Art");
-                  router.push("/search?q=Neural%20Dreams%20Art");
-                  setSearchFocused(false);
-                }}
-              >
-                Neural Dreams Art
-              </div>
-            </div>
-          )}
-        </form>
+        <SearchBox className="flex-1 max-w-2xl mx-4" />
 
         <div className="flex items-center gap-2">
-          <a href={process.env.NEXT_PUBLIC_STUDIO_URL || 'http://localhost:3001'} target="_blank" rel="noopener noreferrer">
-            <Button variant="secondary" size="sm" className="hidden sm:flex items-center gap-2">
+          <a
+            href={process.env.NEXT_PUBLIC_STUDIO_URL || "http://localhost:3001"}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
               <UploadIcon className="w-4 h-4" />
               Upload
             </Button>
@@ -236,7 +148,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               className="relative"
             >
               <BellIcon className="w-5 h-5" />
-              {mounted && (
+              {mounted && unreadCount > 0 && (
                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
               )}
             </Button>
@@ -244,12 +156,23 @@ export function Header({ onMenuClick }: HeaderProps) {
               <div className="absolute right-0 mt-2 w-[334px] bg-[#1a1230] border border-purple-500/30 rounded-xl shadow-lg shadow-purple-500/20 overflow-hidden z-30">
                 <div className="flex items-center justify-between p-3 border-b border-purple-500/20">
                   <h3 className="font-medium">Notifications</h3>
-                  <Button variant="ghost" size="sm" className="text-xs">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-xs"
+                    onClick={handleMarkAllAsRead}
+                    disabled={unreadCount === 0}
+                  >
                     Mark all as read
                   </Button>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
-                  {recentNotifications.map((notification) => (
+                  {notificationsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2Icon className="w-6 h-6 animate-spin text-purple-400" />
+                    </div>
+                  ) : notifications && notifications.length > 0 ? (
+                    notifications.map((notification) => (
                     <div
                       key={notification.id}
                       className={`
@@ -257,36 +180,17 @@ export function Header({ onMenuClick }: HeaderProps) {
                         ${notification.read ? "" : "bg-[#241a38]"}
                         border-b border-purple-500/10
                       `}
-                      onClick={() => {
-                        setNotificationsOpen(false);
-                        if (notification.video) {
-                          router.push(`/video/${notification.video.id}`);
-                        }
-                      }}
+                      onClick={() => handleNotificationClick(notification.id)}
                     >
                       <div className="flex items-start">
-                        <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
-                          <img
-                            src={notification.user.avatar}
-                            alt={notification.user.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
                         <div className="flex-1 min-w-0 overflow-hidden">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="text-sm break-words">
-                                <span className="font-medium">{notification.user.name}</span>{" "}
-                                <span className="text-gray-400">{notification.content}</span>
+                                <span className="text-gray-300">{notification.message}</span>
                               </div>
-                              {notification.video && (
-                                <div className="mt-1 flex items-center text-xs text-gray-300">
-                                  <PlayIcon className="w-3 h-3 mr-1 flex-shrink-0" />
-                                  <span className="truncate">{notification.video.title}</span>
-                                </div>
-                              )}
                               <div className="text-xs text-gray-500 mt-1">
-                                {notification.timestamp}
+                                {formatDate(notification.createdAt)}
                               </div>
                             </div>
                             <div className="flex-shrink-0">
@@ -296,7 +200,13 @@ export function Header({ onMenuClick }: HeaderProps) {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-400">
+                    <BellIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p>No notifications yet</p>
+                  </div>
+                )}
                 </div>
                 <Link
                   href="/notifications"
@@ -320,24 +230,40 @@ export function Header({ onMenuClick }: HeaderProps) {
                 setProfileOpen(!profileOpen);
                 setNotificationsOpen(false);
               }}
-              className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-400 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-400 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform overflow-hidden"
             >
-              <UserIcon className="w-5 h-5 text-white" />
+              {userLoading ? (
+                <Loader2Icon className="w-5 h-5 text-white animate-spin" />
+              ) : user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <UserIcon className="w-5 h-5 text-white" />
+              )}
             </button>
             {mounted && profileOpen && (
               <div className="absolute right-0 mt-2 w-56 bg-[#1a1230] border border-purple-500/30 rounded-xl shadow-lg shadow-purple-500/20 overflow-hidden z-30">
                 <div className="p-4 border-b border-purple-500/20">
                   <div className="flex items-center">
                     <div className="w-10 h-10 rounded-full overflow-hidden mr-3 bg-gradient-to-br from-purple-500 to-blue-400">
-                      <img
-                        src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=150&h=150&auto=format&fit=crop&crop=faces"
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
+                      {user?.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt={user?.name || "Profile"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <UserIcon className="w-6 h-6 text-white" />
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <div className="font-medium">Alex Neural</div>
-                      <div className="text-xs text-gray-400">@alexneural</div>
+                      <div className="font-medium">{user?.name || "Loading..."}</div>
+                      <div className="text-xs text-gray-400">@{user?.username || "..."}</div>
                     </div>
                   </div>
                   <Link

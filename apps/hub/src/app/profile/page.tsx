@@ -10,9 +10,16 @@ import {
   BellIcon,
   ShareIcon,
   UsersIcon,
+  ClockIcon,
+  BookmarkIcon,
+  BarChart3Icon,
+  ExternalLinkIcon,
 } from "lucide-react";
-import { Button } from "../../components/Button";
-import { VideoCard } from "../../components/VideoCard";
+import { Button } from "@/components/Button";
+import { VideoCard } from "@/components/VideoCard";
+import { useUser } from "@/hooks/api/use-user";
+import { Video, VideoStatus } from "@fabl/types";
+import { formatNumber } from "@/lib/utils";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("videos");

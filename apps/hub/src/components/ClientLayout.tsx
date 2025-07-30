@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { AnimatedBackground } from "./AnimatedBackground";
+import { Providers } from "./providers";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -36,15 +38,21 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   }
 
   return (
-    <>
-      <AnimatedBackground />
-      <div className="relative z-10 min-h-screen">
-        <Header onMenuClick={toggleSidebar} />
-        <div className="flex">
-          <Sidebar isOpen={sidebarOpen} />
-          <main className="flex-1 overflow-y-auto">{children}</main>
+    <Providers>
+      <ErrorBoundary>
+        <AnimatedBackground />
+        <div className="relative z-10 min-h-screen">
+          <Header onMenuClick={toggleSidebar} />
+          <div className="flex">
+            <Sidebar isOpen={sidebarOpen} />
+            <main className="flex-1 overflow-y-auto">
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
+            </main>
+          </div>
         </div>
-      </div>
-    </>
+      </ErrorBoundary>
+    </Providers>
   );
 }

@@ -4,7 +4,8 @@
   "private": true,
   "workspaces": [
     "apps/hub",
-    "apps/studio"
+    "apps/studio",
+    "packages/*"
   ],
   "scripts": {
     "dev": "cd apps/hub && npm run dev",
@@ -18,7 +19,14 @@
     "start": "cd apps/hub && npm run start",
     "lint": "npm-run-all lint:*",
     "lint:hub": "cd apps/hub && npm run lint",
-    "lint:studio": "cd apps/studio && npm run lint"
+    "lint:studio": "cd apps/studio && npm run lint",
+    "typecheck": "npm-run-all typecheck:*",
+    "typecheck:hub": "cd apps/hub && npm run typecheck",
+    "typecheck:studio": "cd apps/studio && npm run typecheck",
+    "typecheck:packages": "npm-run-all typecheck:packages:*",
+    "typecheck:packages:db": "cd packages/db && npm run typecheck",
+    "typecheck:packages:types": "cd packages/types && npm run typecheck",
+    "typecheck:packages:utils": "cd packages/utils && npm run typecheck"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"
