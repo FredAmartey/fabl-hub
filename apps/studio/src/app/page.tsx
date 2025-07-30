@@ -164,12 +164,12 @@ export default function StudioDashboard() {
                       <div className="p-3 bg-emerald-500 rounded-xl">
                         <ClockIcon className="w-6 h-6 text-white" />
                       </div>
-                      <span className="text-base font-medium text-gray-600">Watch time (hours)</span>
+                      <span className="text-base font-medium text-gray-600">Total watch time</span>
                     </div>
                     <div>
-                      <p className="text-5xl font-black text-gray-900 mb-2">847</p>
+                      <p className="text-5xl font-black text-gray-900 mb-2">847h</p>
                       <p className="text-green-600 text-base font-semibold">
-                        +156 hours in last 28 days
+                        +156h in last 28 days
                       </p>
                     </div>
                   </div>
@@ -240,7 +240,10 @@ export default function StudioDashboard() {
                       <h3 className="text-2xl font-bold text-gray-900">Top videos</h3>
                       <p className="text-sm text-gray-600">Last 48 hours · Views</p>
                     </div>
-                    <button className="text-purple-600 hover:text-purple-700 font-medium text-base">
+                    <button 
+                      onClick={() => window.location.href = '/analytics'}
+                      className="text-purple-600 hover:text-purple-700 font-medium text-base hover:underline transition-all"
+                    >
                       Go to channel analytics
                     </button>
                   </div>
@@ -253,6 +256,7 @@ export default function StudioDashboard() {
                     ].map((video, i) => (
                       <div
                         key={i}
+                        onClick={() => window.location.href = '/content'}
                         className="group/video bg-white/50 hover:bg-white/70 rounded-2xl p-5 transition-all cursor-pointer hover:shadow-md"
                       >
                         <div className="flex items-start gap-4">
@@ -273,8 +277,15 @@ export default function StudioDashboard() {
                               <p className="text-sm text-blue-600 font-medium">{video.metric}</p>
                             </div>
                           </div>
-                          <div className="opacity-0 group-hover/video:opacity-100 transition-opacity">
-                            <button className="p-2 hover:bg-pink-100 rounded-lg transition-colors" title="View Analytics">
+                          <div>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.location.href = '/analytics';
+                              }}
+                              className="p-2 hover:bg-pink-100 rounded-lg transition-colors" 
+                              title="View Analytics"
+                            >
                               <ChartBarIcon className="w-5 h-5 text-gray-500" />
                             </button>
                           </div>
@@ -301,7 +312,10 @@ export default function StudioDashboard() {
                       <h3 className="text-xl font-bold text-gray-900">Recent subscribers</h3>
                       <p className="text-sm text-gray-600">Lifetime</p>
                     </div>
-                    <button className="text-purple-600 hover:text-purple-700 font-medium text-sm">
+                    <button 
+                      onClick={() => window.location.href = '/analytics'}
+                      className="text-purple-600 hover:text-purple-700 font-medium text-sm hover:underline transition-all"
+                    >
                       See all
                     </button>
                   </div>
@@ -345,6 +359,12 @@ export default function StudioDashboard() {
                           Channel comments I haven't responded to
                         </p>
                       </div>
+                      <button 
+                        onClick={() => window.location.href = '/comments'}
+                        className="text-purple-600 hover:text-purple-700 font-medium text-sm hover:underline transition-all"
+                      >
+                        See all
+                      </button>
                     </div>
 
                     <div className="space-y-2 flex-1 overflow-hidden">
