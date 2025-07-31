@@ -5,28 +5,38 @@
   "workspaces": [
     "apps/hub",
     "apps/studio",
+    "apps/api",
     "packages/*"
   ],
   "scripts": {
     "dev": "cd apps/hub && npm run dev",
     "dev:hub": "cd apps/hub && npm run dev",
     "dev:studio": "cd apps/studio && npm run dev",
-    "dev:all": "npm-run-all --parallel dev:hub dev:studio",
+    "dev:api": "cd apps/api && npm run dev",
+    "dev:all": "npm-run-all --parallel dev:hub dev:studio dev:api",
     "build": "cd apps/hub && npm run build",
     "build:hub": "cd apps/hub && npm run build",
     "build:studio": "cd apps/studio && npm run build",
-    "build:all": "npm-run-all build:hub build:studio",
+    "build:api": "cd apps/api && npm run build",
+    "build:all": "npm-run-all build:hub build:studio build:api",
     "start": "cd apps/hub && npm run start",
     "lint": "npm-run-all lint:*",
     "lint:hub": "cd apps/hub && npm run lint",
     "lint:studio": "cd apps/studio && npm run lint",
+    "lint:api": "echo 'No linting configured for API yet'",
     "typecheck": "npm-run-all typecheck:*",
     "typecheck:hub": "cd apps/hub && npm run typecheck",
     "typecheck:studio": "cd apps/studio && npm run typecheck",
+    "typecheck:api": "cd apps/api && npm run typecheck",
     "typecheck:packages": "npm-run-all typecheck:packages:*",
     "typecheck:packages:db": "cd packages/db && npm run typecheck",
     "typecheck:packages:types": "cd packages/types && npm run typecheck",
-    "typecheck:packages:utils": "cd packages/utils && npm run typecheck"
+    "typecheck:packages:utils": "cd packages/utils && npm run typecheck",
+    "db:generate": "cd packages/db && npm run db:generate",
+    "db:push": "cd packages/db && npm run db:push",
+    "db:migrate": "cd packages/db && npm run db:migrate",
+    "db:studio": "cd packages/db && npm run db:studio",
+    "setup:db": "./scripts/setup-db.sh"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"

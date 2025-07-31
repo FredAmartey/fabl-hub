@@ -38,7 +38,14 @@
       "Bash(npm run typecheck:*)",
       "Bash(npm run:*)",
       "Bash(git restore:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "WebFetch(domain:clerk.com)",
+      "Bash(brew list:*)",
+      "Bash(pg_isready:*)",
+      "Bash(brew install:*)",
+      "Bash(brew services start:*)",
+      "Bash(export:*)",
+      "Bash(psql:*)"
     ],
     "deny": []
   }
