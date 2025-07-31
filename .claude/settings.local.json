@@ -46,7 +46,10 @@
       "Bash(brew services start:*)",
       "Bash(export:*)",
       "Bash(psql:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm start)",
+      "Bash(PORT=3000 npm run dev)",
+      "Bash(npm test:*)"
     ],
     "deny": []
   }

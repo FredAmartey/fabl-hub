@@ -1,63 +1,26 @@
+"use client";
+
 import React from "react";
-import { VideoCard } from "../../components/VideoCard";
 import { TrendingUpIcon } from "lucide-react";
+import { InfiniteVideoGrid } from "@/components/InfiniteVideoGrid";
+import { useInfiniteVideoList } from "@/hooks/use-videos";
 
 export default function TrendingPage() {
-  // Filter only trending videos
-  const trendingVideos = [
-    {
-      id: 1,
-      title: "Neural Dream Journey Through Ancient Civilizations",
-      channel: "AI Wanderer",
-      views: "1.2M",
-      timestamp: "3 days ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "10:23",
-      trending: true,
-    },
-    {
-      id: 3,
-      title: "AI Generated Music: Symphony of Digital Emotions",
-      channel: "Harmonic AI",
-      views: "2.3M",
-      timestamp: "2 weeks ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "8:17",
-      trending: true,
-    },
-    {
-      id: 6,
-      title: "Digital Art Evolution: From Pixels to Neural Networks",
-      channel: "ArtMatrix",
-      views: "932K",
-      timestamp: "1 day ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "22:14",
-      trending: true,
-    },
-    {
-      id: 9,
-      title: "The Future of AI Creativity: Beyond Boundaries",
-      channel: "Tomorrow&apos;s Tech",
-      views: "1.7M",
-      timestamp: "5 days ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "19:42",
-      trending: true,
-    },
-  ];
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteVideoList({ 
+    orderBy: "views",
+    order: "desc",
+    limit: 20 
+  });
+
+  const trendingVideos = data?.pages
+    ?.flatMap(page => page?.data || [])
+    ?.filter(video => video && video.id) || [];
 
   return (
     <div className="px-6 pt-6">
@@ -70,11 +33,14 @@ export default function TrendingPage() {
           <p className="text-gray-400 mt-1">The most popular AI-generated content right now</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {trendingVideos.map((video) => (
-          <VideoCard key={video.id} video={video} />
-        ))}
-      </div>
+      <InfiniteVideoGrid
+        videos={trendingVideos}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        isLoading={isLoading}
+        onLoadMore={fetchNextPage}
+        emptyMessage="No trending videos found. Check back soon!"
+      />
     </div>
   );
 }

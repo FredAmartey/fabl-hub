@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import CustomDropdown from './CustomDropdown'
 import ToggleSwitch from './ToggleSwitch'
+import { useRequestUploadUrl, useCompleteUpload } from '@/hooks/use-upload'
 
 interface UploadFile {
   id: string
@@ -12,6 +13,7 @@ interface UploadFile {
   type: string
   progress: number
   status: 'uploading' | 'processing' | 'completed' | 'error'
+  uploadId?: string // Mux upload ID
 }
 
 interface VideoDetails {
@@ -71,6 +73,10 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
   const [isPublished, setIsPublished] = useState(false)
   const [publishedVideo, setPublishedVideo] = useState<PublishedVideo | null>(null)
   const intervalsRef = useRef<Set<NodeJS.Timeout>>(new Set())
+  
+  // React Query hooks for upload
+  const requestUploadUrl = useRequestUploadUrl()
+  const completeUpload = useCompleteUpload()
 
   useEffect(() => {
     return () => {
@@ -146,7 +152,7 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
     { value: "private", label: "Private", icon: "🔒" }
   ]
 
-  const handleFileUpload = (files: FileList) => {
+  const handleFileUpload = async (files: FileList) => {
     const fileArray = Array.from(files)
     console.log('handleFileUpload called with', fileArray.length, 'files')
     
@@ -180,69 +186,114 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
     
     // Single file - continue with wizard flow
     console.log('Single file detected, processing for wizard...')
-    const newFiles: UploadFile[] = fileArray.map((file, index) => ({
-      id: Date.now() + index + '',
+    const file = fileArray[0]
+    const newFile: UploadFile = {
+      id: Date.now() + '',
       name: file.name,
       size: file.size,
       type: file.type,
       progress: 0,
       status: 'uploading'
-    }))
+    }
     
-    console.log('Setting uploaded files:', newFiles)
-    setUploadedFiles(newFiles) // Replace instead of append to ensure clean state
+    console.log('Setting uploaded files:', [newFile])
+    setUploadedFiles([newFile])
     
-    // Simulate upload progress for each file
-    newFiles.forEach((file) => {
-      console.log('Starting upload simulation for file:', file.id)
-      simulateUploadProgress(file.id)
-    })
+    try {
+      // Request upload URL from Mux API
+      console.log('Requesting upload URL...')
+      const uploadResponse = await requestUploadUrl.mutateAsync({
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type
+      })
+      
+      console.log('Upload URL received:', uploadResponse)
+      
+      // Update file with uploadId from response
+      setUploadedFiles(prev => prev.map(f => 
+        f.id === newFile.id 
+          ? { ...f, uploadId: uploadResponse.uploadId }
+          : f
+      ))
+      
+      // Upload file to Mux using XMLHttpRequest for progress tracking
+      await uploadFileWithProgress(file, uploadResponse.uploadUrl, newFile.id)
+      
+    } catch (error) {
+      console.error('Upload failed:', error)
+      setUploadedFiles(prev => prev.map(f => 
+        f.id === newFile.id 
+          ? { ...f, status: 'error', progress: 0 }
+          : f
+      ))
+    }
   }
 
-  const simulateUploadProgress = (fileId: string) => {
-    let currentProgress = 0
-    
-    const interval = setInterval(() => {
-      currentProgress += Math.random() * 15 + 10 // Increment by 10-25% each time
+  const uploadFileWithProgress = (file: File, uploadUrl: string, fileId: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
       
-      setUploadedFiles(prev => prev.map(file => {
-        if (file.id === fileId) {
-          const newProgress = Math.min(currentProgress, 100)
-          const newStatus = newProgress >= 100 ? 'completed' : 'uploading'
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100)
+          console.log(`File ${fileId} progress: ${progress}%`)
           
-          console.log(`File ${fileId} progress: ${newProgress}%, status: ${newStatus}`)
-          
-          if (newProgress >= 100) {
-            console.log('Upload completed for file:', fileId)
-            
-            // Trigger auto-advance directly for single file uploads
-            if (currentStep === 1 && !isAutoAdvancing) {
-              console.log('Triggering immediate auto-advance')
-              setIsAutoAdvancing(true)
-              setTimeout(() => {
-                console.log('Auto-advancing to step 2')
-                setCurrentStep(2)
-                setIsAutoAdvancing(false)
-              }, 800)
-            }
-          }
-          
-          return { 
-            ...file, 
-            progress: newProgress, 
-            status: newStatus
-          }
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === fileId 
+              ? { ...f, progress, status: progress >= 100 ? 'processing' : 'uploading' }
+              : f
+          ))
         }
-        return file
-      }))
+      })
       
-      if (currentProgress >= 100) {
-        clearInterval(interval)
-        intervalsRef.current.delete(interval)
-      }
-    }, 300) // Faster updates
-    
-    intervalsRef.current.add(interval)
+      // Handle upload completion
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          console.log('Upload completed for file:', fileId)
+          
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === fileId 
+              ? { ...f, progress: 100, status: 'completed' }
+              : f
+          ))
+          
+          // Set default title from filename if not already set
+          if (!videoDetails.title) {
+            const fileName = file.name.replace(/\.[^/.]+$/, '') // Remove extension
+            setVideoDetails(prev => ({ ...prev, title: fileName }))
+          }
+          
+          // Trigger auto-advance for single file uploads
+          if (currentStep === 1 && !isAutoAdvancing) {
+            console.log('Triggering auto-advance')
+            setIsAutoAdvancing(true)
+            setTimeout(() => {
+              console.log('Auto-advancing to step 2')
+              setCurrentStep(2)
+              setIsAutoAdvancing(false)
+            }, 800)
+          }
+          
+          resolve()
+        } else {
+          console.error('Upload failed with status:', xhr.status)
+          reject(new Error(`Upload failed: ${xhr.status}`))
+        }
+      })
+      
+      // Handle upload errors
+      xhr.addEventListener('error', () => {
+        console.error('Upload error for file:', fileId)
+        reject(new Error('Upload failed'))
+      })
+      
+      // Start the upload
+      xhr.open('PUT', uploadUrl)
+      xhr.setRequestHeader('Content-Type', file.type)
+      xhr.send(file)
+    })
   }
 
   const handleTagInputKeyPress = (e: React.KeyboardEvent) => {
@@ -286,24 +337,41 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
     }
   }
 
-  const handlePublish = () => {
-    // Simulate publishing process
-    const videoId = 'abc123def456'
-    const mockPublishedVideo: PublishedVideo = {
-      id: videoId,
-      title: videoDetails.title || 'Untitled Video',
-      url: `https://fabl.tv/watch/${videoId}`,
-      thumbnail: '/api/placeholder/320/180', // Mock thumbnail
-      uploadDate: new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      }),
-      duration: '2:34' // Mock duration
-    }
+  const handlePublish = async () => {
+    if (!uploadedFiles[0]) return
     
-    setPublishedVideo(mockPublishedVideo)
-    setIsPublished(true)
+    try {
+      // Complete the upload with video metadata
+      console.log('Publishing video...')
+      const publishResponse = await completeUpload.mutateAsync({
+        uploadId: uploadedFiles[0].uploadId || uploadedFiles[0].id,
+        title: videoDetails.title,
+        description: videoDetails.description,
+        visibility: visibilitySettings.visibility
+      })
+      
+      console.log('Video published:', publishResponse)
+      
+      const publishedVideo: PublishedVideo = {
+        id: publishResponse.videoId || uploadedFiles[0].id,
+        title: videoDetails.title || 'Untitled Video',
+        url: `https://fabl.tv/watch/${publishResponse.videoId || uploadedFiles[0].id}`,
+        thumbnail: publishResponse.thumbnail || '/api/placeholder/320/180',
+        uploadDate: new Date().toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric' 
+        }),
+        duration: publishResponse.duration || '0:00'
+      }
+      
+      setPublishedVideo(publishedVideo)
+      setIsPublished(true)
+      
+    } catch (error) {
+      console.error('Publishing failed:', error)
+      // Could add error handling UI here
+    }
   }
 
   const copyVideoLink = () => {
@@ -553,16 +621,27 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
                       <div className="flex items-center gap-2 mt-1">
                         <div className="flex-1 bg-gray-200 rounded-full h-1.5">
                           <div 
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 h-1.5 rounded-full transition-all"
+                            className={`h-1.5 rounded-full transition-all ${
+                              uploadedFiles[0]?.status === 'error' 
+                                ? 'bg-red-500' 
+                                : 'bg-gradient-to-r from-purple-600 to-pink-600'
+                            }`}
                             style={{ width: `${uploadedFiles[0]?.progress || 0}%` }}
                           />
                         </div>
-                        <span className="text-xs font-medium text-purple-600 whitespace-nowrap">
+                        <span className={`text-xs font-medium whitespace-nowrap ${
+                          uploadedFiles[0]?.status === 'error' ? 'text-red-600' : 'text-purple-600'
+                        }`}>
                           {uploadedFiles[0]?.status === 'completed' ? '✅ Ready' :
+                           uploadedFiles[0]?.status === 'error' ? '❌ Failed' :
+                           uploadedFiles[0]?.status === 'processing' ? '⚙️ Processing...' :
                            uploadedFiles[0]?.status === 'uploading' ? `${Math.round(uploadedFiles[0]?.progress || 0)}%` :
-                           'Processing...'}
+                           'Starting...'}
                         </span>
                       </div>
+                      {requestUploadUrl.isLoading && (
+                        <div className="text-xs text-gray-500 mt-1">Preparing upload...</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1010,10 +1089,20 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
             ) : (
               <button
                 onClick={handlePublish}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 text-sm"
+                disabled={completeUpload.isLoading}
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200 text-sm"
               >
-                <span className="text-base">🚀</span>
-                Publish
+                {completeUpload.isLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Publishing...
+                  </>
+                ) : (
+                  <>
+                    <span className="text-base">🚀</span>
+                    Publish
+                  </>
+                )}
               </button>
             )}
           </div>

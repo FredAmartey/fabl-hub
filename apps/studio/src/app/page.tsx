@@ -24,12 +24,19 @@ import {
   CogIcon,
 } from "@heroicons/react/24/outline";
 import { useUpload } from "../contexts/UploadContext";
+import { useDashboardStats, useTopVideos, useRecentSubscribers, useRecentComments } from "@/hooks/use-dashboard";
 
 export default function StudioDashboard() {
   const { openUploadModal } = useUpload();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // API hooks for dashboard data
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: topVideos, isLoading: videosLoading } = useTopVideos();
+  const { data: recentSubscribers, isLoading: subscribersLoading } = useRecentSubscribers();
+  const { data: recentComments, isLoading: commentsLoading } = useRecentComments();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -113,8 +120,24 @@ export default function StudioDashboard() {
                       <span className="text-base font-medium text-gray-600">Current subscribers</span>
                     </div>
                     <div>
-                      <p className="text-5xl font-black text-gray-900 mb-2">1,247</p>
-                      <p className="text-green-600 text-base font-semibold">+127 in last 28 days</p>
+                      {statsLoading ? (
+                        <div className="animate-pulse">
+                          <div className="h-12 bg-gray-300 rounded mb-2"></div>
+                          <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-5xl font-black text-gray-900 mb-2">
+                            {stats?.subscribers?.current?.toLocaleString() || '0'}
+                          </p>
+                          <p className={`text-base font-semibold ${
+                            (stats?.subscribers?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {(stats?.subscribers?.change || 0) >= 0 ? '+' : ''}
+                            {stats?.subscribers?.change?.toLocaleString() || '0'} in last {stats?.subscribers?.period || '28 days'}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -140,8 +163,28 @@ export default function StudioDashboard() {
                       <span className="text-base font-medium text-gray-600">Views</span>
                     </div>
                     <div>
-                      <p className="text-5xl font-black text-gray-900 mb-2">12.4K</p>
-                      <p className="text-green-600 text-base font-semibold">+2.3K in last 28 days</p>
+                      {statsLoading ? (
+                        <div className="animate-pulse">
+                          <div className="h-12 bg-gray-300 rounded mb-2"></div>
+                          <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-5xl font-black text-gray-900 mb-2">
+                            {stats?.views?.total >= 1000 
+                              ? `${(stats.views.total / 1000).toFixed(1)}K` 
+                              : stats?.views?.total?.toLocaleString() || '0'}
+                          </p>
+                          <p className={`text-base font-semibold ${
+                            (stats?.views?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {(stats?.views?.change || 0) >= 0 ? '+' : ''}
+                            {stats?.views?.change >= 1000 
+                              ? `${(stats.views.change / 1000).toFixed(1)}K` 
+                              : stats?.views?.change?.toLocaleString() || '0'} in last {stats?.views?.period || '28 days'}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -167,10 +210,24 @@ export default function StudioDashboard() {
                       <span className="text-base font-medium text-gray-600">Total watch time</span>
                     </div>
                     <div>
-                      <p className="text-5xl font-black text-gray-900 mb-2">847h</p>
-                      <p className="text-green-600 text-base font-semibold">
-                        +156h in last 28 days
-                      </p>
+                      {statsLoading ? (
+                        <div className="animate-pulse">
+                          <div className="h-12 bg-gray-300 rounded mb-2"></div>
+                          <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-5xl font-black text-gray-900 mb-2">
+                            {stats?.watchTime?.hours?.toLocaleString() || '0'}h
+                          </p>
+                          <p className={`text-base font-semibold ${
+                            (stats?.watchTime?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {(stats?.watchTime?.change || 0) >= 0 ? '+' : ''}
+                            {stats?.watchTime?.change?.toLocaleString() || '0'}h in last {stats?.watchTime?.period || '28 days'}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -249,11 +306,22 @@ export default function StudioDashboard() {
                   </div>
 
                   <div className="space-y-4">
-                    {[
-                      { title: "Best support builds Season 14", views: "2.1K views", metric: "Most watched", rank: "#1" },
-                      { title: "Garen R cast time", views: "1.2K views", metric: "High engagement", rank: "#2" },
-                      { title: "How to ward baron properly", views: "847 views", metric: "Rising fast", rank: "#3" },
-                    ].map((video, i) => (
+                    {videosLoading ? (
+                      <div className="space-y-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="bg-white/50 rounded-2xl p-5 animate-pulse">
+                            <div className="flex items-start gap-4">
+                              <div className="w-20 h-14 bg-gray-300 rounded-lg"></div>
+                              <div className="flex-1 space-y-2">
+                                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      (topVideos || []).slice(0, 3).map((video, i) => (
                       <div
                         key={i}
                         onClick={() => window.location.href = '/content'}
@@ -265,7 +333,7 @@ export default function StudioDashboard() {
                               <PlayIcon className="w-6 h-6 text-gray-500" />
                             </div>
                             <div className="absolute -top-2 -left-2 w-6 h-6 bg-pink-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                              {video.rank}
+                              #{video.rank || i + 1}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
@@ -273,8 +341,8 @@ export default function StudioDashboard() {
                               {video.title}
                             </h4>
                             <div className="flex items-center gap-4 mt-1">
-                              <p className="text-base text-gray-600">{video.views}</p>
-                              <p className="text-sm text-blue-600 font-medium">{video.metric}</p>
+                              <p className="text-base text-gray-600">{video.views?.toLocaleString() || 0} views</p>
+                              <p className="text-sm text-blue-600 font-medium">{video.engagement}</p>
                             </div>
                           </div>
                           <div>
@@ -291,7 +359,8 @@ export default function StudioDashboard() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -321,24 +390,38 @@ export default function StudioDashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    {[
-                      { name: "kingaslan619", subscribers: "0 subscribers", avatar: "KA" },
-                      { name: "Koby Quagraine", subscribers: "1 subscriber", avatar: "KQ" },
-                      { name: "Sarah Chen", subscribers: "12 subscribers", avatar: "SC" },
-                    ].map((subscriber, i) => (
+                    {subscribersLoading ? (
+                      <div className="space-y-2">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="flex items-center gap-3 p-3 bg-white/40 rounded-xl animate-pulse">
+                            <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+                            <div className="flex-1 space-y-1">
+                              <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+                              <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      (recentSubscribers || []).slice(0, 3).map((subscriber, i) => (
                       <div
                         key={i}
                         className="flex items-center gap-3 p-3 bg-white/40 rounded-xl hover:bg-white/60 transition-colors cursor-pointer"
                       >
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                          {subscriber.avatar}
+                          {subscriber.avatar || subscriber.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-base font-semibold text-gray-900">{subscriber.name}</p>
-                          <p className="text-sm text-gray-600">{subscriber.subscribers}</p>
+                          <p className="text-sm text-gray-600">
+                            {subscriber.subscriberCount === 0 ? '0 subscribers' : 
+                             subscriber.subscriberCount === 1 ? '1 subscriber' : 
+                             `${subscriber.subscriberCount} subscribers`}
+                          </p>
                         </div>
                       </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -368,43 +451,40 @@ export default function StudioDashboard() {
                     </div>
 
                     <div className="space-y-2 flex-1 overflow-hidden">
-                      {[
-                        {
-                          user: "@alessiapinelli",
-                          text: "This looks tilting asf",
-                          time: "1 day ago",
-                          avatar: "AP",
-                        },
-                        {
-                          user: "@mikejones",
-                          text: "Great tutorial! When's the next part coming?",
-                          time: "2 days ago",
-                          avatar: "MJ",
-                        },
-                        {
-                          user: "@gamerpro",
-                          text: "Amazing content as always! Keep it up 🔥",
-                          time: "3 days ago",
-                          avatar: "GP",
-                        },
-                      ].map((comment, i) => (
+                      {commentsLoading ? (
+                        <div className="space-y-2">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="flex items-start gap-3 p-3 bg-white/40 rounded-xl animate-pulse">
+                              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                              <div className="flex-1 space-y-1">
+                                <div className="h-3 bg-gray-300 rounded w-1/3"></div>
+                                <div className="h-4 bg-gray-300 rounded w-full"></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        (recentComments || []).slice(0, 3).map((comment, i) => (
                         <div
                           key={i}
                           className="flex items-start gap-3 p-3 bg-white/40 rounded-xl hover:bg-white/60 transition-colors cursor-pointer"
                         >
                           <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                            {comment.avatar}
+                            {comment.avatar || comment.user?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <p className="text-sm font-semibold text-gray-900">{comment.user}</p>
                               <span className="text-xs text-gray-500">•</span>
-                              <p className="text-xs text-gray-500">{comment.time}</p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(comment.createdAt).toLocaleDateString()}
+                              </p>
                             </div>
-                            <p className="text-sm text-gray-700 leading-tight">{comment.text}</p>
+                            <p className="text-sm text-gray-700 leading-tight">{comment.content}</p>
                           </div>
                         </div>
-                      ))}
+                        ))
+                      )}
                       <button className="w-full text-center text-purple-600 hover:text-purple-700 font-medium text-sm py-2">
                         View more
                       </button>
@@ -438,21 +518,57 @@ export default function StudioDashboard() {
                     </div>
 
                     <div className="flex-1 flex flex-col justify-center">
-                      <p className="text-4xl font-black text-gray-900 mb-2">$23.47</p>
-                      <p className="text-green-600 text-base font-semibold mb-4">
-                        +$8.12 from last month
-                      </p>
+                      {statsLoading ? (
+                        <div className="animate-pulse">
+                          <div className="h-10 bg-gray-300 rounded mb-2"></div>
+                          <div className="h-4 bg-gray-300 rounded w-3/4 mb-4"></div>
+                          <div className="space-y-3">
+                            <div className="flex justify-between">
+                              <div className="h-3 bg-gray-300 rounded w-1/3"></div>
+                              <div className="h-3 bg-gray-300 rounded w-1/4"></div>
+                            </div>
+                            <div className="flex justify-between">
+                              <div className="h-3 bg-gray-300 rounded w-1/3"></div>
+                              <div className="h-3 bg-gray-300 rounded w-1/4"></div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-4xl font-black text-gray-900 mb-2">
+                            ${stats?.revenue?.total?.toFixed(2) || '0.00'}
+                          </p>
+                          <p className={`text-base font-semibold mb-4 ${
+                            (stats?.revenue?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {(stats?.revenue?.change || 0) >= 0 ? '+' : ''}
+                            ${stats?.revenue?.change?.toFixed(2) || '0.00'} from last month
+                          </p>
 
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Ad revenue</span>
-                          <span className="text-sm font-semibold text-gray-900">$18.30</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Memberships</span>
-                          <span className="text-sm font-semibold text-gray-900">$5.17</span>
-                        </div>
-                      </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600">Ad revenue</span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                ${stats?.revenue?.breakdown?.ads?.toFixed(2) || '0.00'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-gray-600">Memberships</span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                ${stats?.revenue?.breakdown?.memberships?.toFixed(2) || '0.00'}
+                              </span>
+                            </div>
+                            {(stats?.revenue?.breakdown?.other || 0) > 0 && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">Other</span>
+                                <span className="text-sm font-semibold text-gray-900">
+                                  ${stats?.revenue?.breakdown?.other?.toFixed(2) || '0.00'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

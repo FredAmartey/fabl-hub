@@ -48,9 +48,23 @@ export function VideoGrid({
     );
   }
 
+  // Filter out invalid videos and add proper error handling
+  const validVideos = videos.filter((video) => video && video.id);
+
+  if (validVideos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="text-gray-400 text-center">
+          <div className="text-6xl mb-4">📹</div>
+          <p className="text-lg">{emptyMessage}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`grid ${gridCols[columns]} gap-6`}>
-      {videos.map((video, index) => (
+      {validVideos.map((video, index) => (
         <VideoCard 
           key={video.id} 
           video={video} 

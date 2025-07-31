@@ -34,6 +34,11 @@ const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
       orgRole: auth.orgRole,
       orgSlug: auth.orgSlug
     }
+    
+    // Add userId to request for logging
+    if (auth.userId) {
+      (request as any).userId = auth.userId
+    }
   })
 
   // Helper to require authentication

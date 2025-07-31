@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SearchIcon, XIcon, ClockIcon, TrendingUpIcon, Loader2Icon } from "lucide-react";
-import { useSearch, usePopularSearches } from "@/hooks/api/use-search";
+import { useSearch, usePopularSearches, useSearchSuggestions } from "@/hooks/api/use-search";
 import { useSearchHistory } from "@/hooks/use-search-history";
 import { formatNumber } from "@fabl/utils";
 import Link from "next/link";
@@ -23,6 +23,7 @@ export function SearchBox({ className = "" }: SearchBoxProps) {
 
   const { data: searchResults, isLoading } = useSearch(query);
   const { data: popularSearches } = usePopularSearches();
+  const { data: searchSuggestions } = useSearchSuggestions(query);
   const { history, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
 
   // Close dropdown when clicking outside
@@ -53,8 +54,9 @@ export function SearchBox({ className = "" }: SearchBoxProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    const suggestionsCount = searchSuggestions?.length || searchResults?.suggestions?.length || 0;
     const totalItems = (searchResults?.videos.length || 0) + 
-                      (searchResults?.suggestions.length || 0) + 
+                      suggestionsCount + 
                       (query ? 0 : history.length);
 
     switch (e.key) {
@@ -76,8 +78,9 @@ export function SearchBox({ className = "" }: SearchBoxProps) {
               router.push(`/video/${searchResults.videos[selectedIndex].id}`);
             } else {
               const suggestionIndex = selectedIndex - videoCount;
-              if (suggestionIndex < searchResults.suggestions.length) {
-                handleSearch(searchResults.suggestions[suggestionIndex]);
+              const suggestions = searchSuggestions?.length > 0 ? searchSuggestions : searchResults?.suggestions || [];
+              if (suggestionIndex < suggestions.length) {
+                handleSearch(suggestions[suggestionIndex]);
               }
             }
           } else if (!query && selectedIndex < history.length) {
@@ -182,26 +185,28 @@ export function SearchBox({ className = "" }: SearchBoxProps) {
                   )}
 
                   {/* Search Suggestions */}
-                  {searchResults.suggestions.length > 0 && (
+                  {(searchResults?.suggestions?.length > 0 || searchSuggestions?.length > 0) && (
                     <div className="p-2 border-t border-purple-500/10">
                       <div className="text-xs text-gray-400 px-3 py-1 font-medium">Suggestions</div>
-                      {searchResults.suggestions.map((suggestion, index) => {
-                        const itemIndex = (searchResults.videos.length || 0) + index;
-                        return (
-                          <button
-                            key={suggestion}
-                            onClick={() => handleSearch(suggestion)}
-                            className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                              selectedIndex === itemIndex
-                                ? "bg-purple-500/20"
-                                : "hover:bg-purple-500/10"
-                            }`}
-                          >
-                            <SearchIcon className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm">{suggestion}</span>
-                          </button>
-                        );
-                      })}
+                      {/* Use real-time suggestions if available, otherwise use search result suggestions */}
+                      {(searchSuggestions && searchSuggestions.length > 0 ? searchSuggestions : searchResults?.suggestions || [])
+                        .map((suggestion, index) => {
+                          const itemIndex = (searchResults?.videos?.length || 0) + index;
+                          return (
+                            <button
+                              key={suggestion}
+                              onClick={() => handleSearch(suggestion)}
+                              className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                                selectedIndex === itemIndex
+                                  ? "bg-purple-500/20"
+                                  : "hover:bg-purple-500/10"
+                              }`}
+                            >
+                              <SearchIcon className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm">{suggestion}</span>
+                            </button>
+                          );
+                        })}
                     </div>
                   )}
                 </>

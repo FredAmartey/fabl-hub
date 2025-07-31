@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { InfiniteVideoGrid } from "@/components/InfiniteVideoGrid";
-import { useVideos } from "@/hooks/api/use-videos";
+import { useInfiniteVideoList } from "@/hooks/use-videos";
 import { useUrlState } from "@/hooks/use-url-state";
 import { ChevronDownIcon } from "lucide-react";
 
@@ -47,14 +47,16 @@ export default function SearchPage() {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useVideos({ 
+  } = useInfiniteVideoList({ 
     search: query,
     orderBy: filters.sort === "views" ? "views" : filters.sort === "date" ? "createdAt" : undefined,
     order: filters.sort === "views" ? "desc" : filters.sort === "date" ? "desc" : undefined,
     limit: 20 
   });
 
-  const allVideos = data?.pages.flatMap(page => page.data) || [];
+  const allVideos = data?.pages
+    ?.flatMap(page => page?.data || [])
+    ?.filter(video => video && video.id) || [];
 
 
   const activeFilterCount = [

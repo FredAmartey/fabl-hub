@@ -8,6 +8,8 @@ import env from '@fastify/env'
 // Import plugins and routes
 import { dbPlugin } from './lib/db'
 import { authPlugin } from './lib/auth'
+import { cachePlugin } from './lib/cache'
+import { structuredLoggingPlugin } from './lib/structured-logger'
 import { errorHandler } from './lib/error-handler'
 
 // Route imports
@@ -15,6 +17,8 @@ import authRoutes from './routes/auth'
 import userRoutes from './routes/users'
 import videoRoutes from './routes/videos'
 import uploadRoutes from './routes/upload'
+import searchRoutes from './routes/search'
+import dashboardRoutes from './routes/dashboard'
 
 const server = fastify({
   logger: {
@@ -79,7 +83,9 @@ async function start() {
     })
 
     // Register custom plugins
+    await server.register(structuredLoggingPlugin)
     await server.register(dbPlugin)
+    await server.register(cachePlugin)
     await server.register(authPlugin)
 
     // Register error handler
@@ -97,6 +103,8 @@ async function start() {
     await server.register(userRoutes, { prefix: '/api/users' })
     await server.register(videoRoutes, { prefix: '/api/videos' })
     await server.register(uploadRoutes, { prefix: '/api/upload' })
+    await server.register(searchRoutes, { prefix: '/api/search' })
+    await server.register(dashboardRoutes, { prefix: '/api/dashboard' })
 
     // Start server
     const port = parseInt(server.config.PORT, 10)

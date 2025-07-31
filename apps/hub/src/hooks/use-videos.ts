@@ -14,11 +14,22 @@ export function useVideoList(params?: VideoParams) {
 export function useInfiniteVideoList(params?: Omit<VideoParams, 'page'>) {
   return useInfiniteQuery({
     queryKey: ['videos', 'list', params],
-    queryFn: ({ pageParam }) => apiClient.getVideos({ ...params, page: pageParam }),
+    queryFn: async ({ pageParam }) => {
+      try {
+        const response = await apiClient.getVideos({ ...params, page: pageParam })
+        // Ensure we return a valid structure even if API fails
+        return response || { data: [], meta: { page: pageParam, hasMore: false } }
+      } catch (error) {
+        console.warn('API call failed, returning empty data:', error)
+        // Return empty data structure to prevent crashes
+        return { data: [], meta: { page: pageParam, hasMore: false } }
+      }
+    },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      const hasMore = lastPage.meta?.hasMore ?? false
-      const nextPage = (lastPage.meta?.page ?? 0) + 1
+      if (!lastPage || !lastPage.meta) return undefined
+      const hasMore = lastPage.meta.hasMore ?? false
+      const nextPage = (lastPage.meta.page ?? 0) + 1
       return hasMore ? nextPage : undefined
     },
   })

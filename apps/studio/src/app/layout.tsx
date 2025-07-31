@@ -3,6 +3,7 @@ import { Inter, Afacad } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import StudioLayout from "@/components/StudioLayout";
+import { Providers } from "@/components/providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -33,7 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           className={`${inter.variable} ${afacad.variable} font-afacad antialiased bg-[#0a0a0f] text-white min-h-screen`}
           suppressHydrationWarning
         >
-          <StudioLayout>{children}</StudioLayout>
+          <Providers>
+            <StudioLayout>{children}</StudioLayout>
+          </Providers>
         </body>
       </html>
     </ClerkProvider>

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { InfiniteVideoGrid } from "../components/InfiniteVideoGrid";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-// import { useInfiniteVideoList } from "@/hooks/use-videos";
+import { useInfiniteVideoList } from "@/hooks/use-videos";
 
 const categories = [
   "All",
@@ -19,23 +19,17 @@ const categories = [
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState("All");
   
-  // Temporarily disabled to fix clientModules error
-  // const {
-  //   data,
-  //   fetchNextPage,
-  //   hasNextPage,
-  //   isFetchingNextPage,
-  //   isLoading,
-  // } = useInfiniteVideoList({ limit: 12 });
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteVideoList({ limit: 12 });
 
-  // const allVideos = data?.pages.flatMap(page => page.data) || [];
-  
-  // Mock data for now
-  const allVideos: any[] = [];
-  const hasNextPage = false;
-  const isFetchingNextPage = false;
-  const isLoading = false;
-  const fetchNextPage = () => {};
+  const allVideos = data?.pages
+    ?.flatMap(page => page?.data || [])
+    ?.filter(video => video && video.id) || [];
 
   return (
     <div className="px-6 pt-4">

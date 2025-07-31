@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useUser } from '@/hooks/api/use-user';
 import { useVideos } from '@/hooks/api/use-videos';
 import { Button } from '@/components/Button';
