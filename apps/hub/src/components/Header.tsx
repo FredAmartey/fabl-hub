@@ -23,6 +23,7 @@ import { SearchBox } from "./SearchBox";
 import { useUser } from "@/hooks/api/use-user";
 import { useNotifications, useMarkNotificationRead } from "@/hooks/api/use-notifications";
 import { formatDate } from "@fabl/utils";
+import { useUser as useClerkUser, SignInButton, useClerk } from "@clerk/nextjs";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -58,7 +59,8 @@ export function Header({ onMenuClick }: HeaderProps) {
   }, []);
 
   // Fetch user data and notifications
-  const { data: user, isLoading: userLoading } = useUser();
+  const { user: clerkUser, isLoaded: clerkLoaded, isSignedIn } = useClerkUser();
+  const { signOut } = useClerk();
   const { data: notifications, isLoading: notificationsLoading } = useNotifications();
   const markAsRead = useMarkNotificationRead();
 
@@ -125,19 +127,29 @@ export function Header({ onMenuClick }: HeaderProps) {
         <SearchBox className="flex-1 max-w-2xl mx-4" />
 
         <div className="flex items-center gap-2">
-          <a
-            href={process.env.NEXT_PUBLIC_STUDIO_URL || "http://localhost:3001"}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
-              <UploadIcon className="w-4 h-4" />
-              Upload
-            </Button>
-          </a>
+          {isSignedIn ? (
+            <a
+              href={process.env.NEXT_PUBLIC_STUDIO_URL || "http://localhost:3001"}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+                <UploadIcon className="w-4 h-4" />
+                Upload
+              </Button>
+            </a>
+          ) : (
+            <SignInButton mode="modal">
+              <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+                <UploadIcon className="w-4 h-4" />
+                Upload
+              </Button>
+            </SignInButton>
+          )}
 
-          {/* Notifications Dropdown */}
-          <div className="relative" ref={notificationsRef}>
+          {/* Notifications Dropdown - Only show when signed in */}
+          {isSignedIn && (
+            <div className="relative" ref={notificationsRef}>
             <Button
               variant="ghost"
               size="icon"
@@ -222,9 +234,15 @@ export function Header({ onMenuClick }: HeaderProps) {
               </div>
             )}
           </div>
+          )}
 
-          {/* User Profile Dropdown */}
-          <div className="relative" ref={profileRef}>
+          {/* User Profile Dropdown - Show sign in button when not authenticated */}
+          {!clerkLoaded ? (
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-400 flex items-center justify-center animate-pulse">
+              <Loader2Icon className="w-5 h-5 text-white animate-spin" />
+            </div>
+          ) : isSignedIn ? (
+            <div className="relative" ref={profileRef}>
             <button
               onClick={() => {
                 setProfileOpen(!profileOpen);
@@ -232,12 +250,10 @@ export function Header({ onMenuClick }: HeaderProps) {
               }}
               className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-400 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform overflow-hidden"
             >
-              {userLoading ? (
-                <Loader2Icon className="w-5 h-5 text-white animate-spin" />
-              ) : user?.avatarUrl ? (
+              {clerkUser?.imageUrl ? (
                 <img
-                  src={user.avatarUrl}
-                  alt={user.name}
+                  src={clerkUser.imageUrl}
+                  alt={clerkUser.firstName || "Profile"}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -249,10 +265,10 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <div className="p-4 border-b border-purple-500/20">
                   <div className="flex items-center">
                     <div className="w-10 h-10 rounded-full overflow-hidden mr-3 bg-gradient-to-br from-purple-500 to-blue-400">
-                      {user?.avatarUrl ? (
+                      {clerkUser?.imageUrl ? (
                         <img
-                          src={user.avatarUrl}
-                          alt={user?.name || "Profile"}
+                          src={clerkUser.imageUrl}
+                          alt={clerkUser.firstName || "Profile"}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -262,8 +278,8 @@ export function Header({ onMenuClick }: HeaderProps) {
                       )}
                     </div>
                     <div>
-                      <div className="font-medium">{user?.name || "Loading..."}</div>
-                      <div className="text-xs text-gray-400">@{user?.username || "..."}</div>
+                      <div className="font-medium">{clerkUser?.firstName || clerkUser?.username || "User"}</div>
+                      <div className="text-xs text-gray-400">@{clerkUser?.username || clerkUser?.emailAddresses[0]?.emailAddress?.split('@')[0] || "user"}</div>
                     </div>
                   </div>
                   <Link
@@ -275,14 +291,14 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </Link>
                 </div>
                 <div className="py-1">
-                  <Link
-                    href="/upload"
+                  <a
+                    href={process.env.NEXT_PUBLIC_STUDIO_URL || "http://localhost:3001"}
                     className="flex items-center px-4 py-2 text-sm hover:bg-purple-500/10 transition-colors"
                     onClick={() => setProfileOpen(false)}
                   >
                     <UploadIcon className="w-4 h-4 mr-3 text-purple-400" />
                     Upload Video
-                  </Link>
+                  </a>
                   <Link
                     href="/settings"
                     className="flex items-center px-4 py-2 text-sm hover:bg-purple-500/10 transition-colors"
@@ -305,7 +321,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                     className="flex items-center px-4 py-2 text-sm hover:bg-purple-500/10 transition-colors w-full text-left"
                     onClick={() => {
                       setProfileOpen(false);
-                      // Handle logout logic here
+                      signOut();
                     }}
                   >
                     <LogOutIcon className="w-4 h-4 mr-3 text-purple-400" />
@@ -315,6 +331,13 @@ export function Header({ onMenuClick }: HeaderProps) {
               </div>
             )}
           </div>
+          ) : (
+            <SignInButton mode="modal">
+              <Button variant="primary" size="sm">
+                Sign In
+              </Button>
+            </SignInButton>
+          )}
         </div>
       </div>
     </header>

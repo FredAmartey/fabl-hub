@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Afacad } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import StudioLayout from "@/components/StudioLayout";
 
@@ -26,13 +27,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${afacad.variable} font-afacad antialiased bg-[#0a0a0f] text-white min-h-screen`}
-        suppressHydrationWarning
-      >
-        <StudioLayout>{children}</StudioLayout>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={`${inter.variable} ${afacad.variable} font-afacad antialiased bg-[#0a0a0f] text-white min-h-screen`}
+          suppressHydrationWarning
+        >
+          <StudioLayout>{children}</StudioLayout>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useUser, useClerk } from "@clerk/nextjs";
 import {
   HomeIcon,
   PlayIcon,
@@ -59,12 +60,22 @@ interface UploadFile {
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isLoaded, isSignedIn, user } = useUser();
+  const { signOut } = useClerk();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [uploadQueue, setUploadQueue] = useState<UploadFile[]>([]);
   const [showProgressTracker, setShowProgressTracker] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Redirect to sign-in if not authenticated
+  useEffect(() => {
+    if (isLoaded && !isSignedIn && pathname !== '/sign-in' && pathname !== '/sign-up') {
+      router.push('/sign-in');
+    }
+  }, [isLoaded, isSignedIn, pathname, router]);
 
   // Lock body scroll when modal is open
   React.useEffect(() => {
@@ -180,7 +191,13 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
               title="Change profile picture"
             />
             <div className="w-28 h-28 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center shadow-lg overflow-hidden">
-              {profilePicture ? (
+              {user?.imageUrl ? (
+                <img 
+                  src={user.imageUrl} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : profilePicture ? (
                 <img 
                   src={profilePicture} 
                   alt="Profile" 
@@ -196,7 +213,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
           </div>
           <div className="mt-4 text-center">
             <p className="text-lg font-semibold text-white">Your channel</p>
-            <p className="text-sm text-gray-500">Fred A</p>
+            <p className="text-sm text-gray-500">{user?.firstName || user?.username || 'Loading...'}</p>
           </div>
         </div>
 
@@ -293,7 +310,13 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
             >
               <div className="absolute inset-0 rounded-full bg-white p-0.5">
                 <div className="w-full h-full rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center">
-                  {profilePicture ? (
+                  {user?.imageUrl ? (
+                    <img 
+                      src={user.imageUrl} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : profilePicture ? (
                     <img 
                       src={profilePicture} 
                       alt="Profile" 
@@ -312,7 +335,13 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                 <div className="p-4 border-b border-gray-200/50">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {profilePicture ? (
+                      {user?.imageUrl ? (
+                        <img 
+                          src={user.imageUrl} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : profilePicture ? (
                         <img 
                           src={profilePicture} 
                           alt="Profile" 
@@ -323,8 +352,8 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900">Fred A</p>
-                      <p className="text-xs text-gray-500 truncate">@Fred-xh7gl</p>
+                      <p className="text-sm font-semibold text-gray-900">{user?.firstName || user?.username || 'User'}</p>
+                      <p className="text-xs text-gray-500 truncate">@{user?.username || user?.emailAddresses[0]?.emailAddress?.split('@')[0] || 'user'}</p>
                     </div>
                   </div>
                 </div>
@@ -336,10 +365,13 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                     Your channel
                   </button>
                   
-                  <button className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3">
+                  <a 
+                    href={process.env.NEXT_PUBLIC_HUB_URL || "http://localhost:3000"}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3 block"
+                  >
                     <ArrowTopRightOnSquareIcon className="w-4 h-4 text-gray-500" />
                     Go to fabl.tv
-                  </button>
+                  </a>
                   
                   <button className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3">
                     <ArrowsRightLeftIcon className="w-4 h-4 text-gray-500" />
@@ -348,7 +380,10 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
                   
                   <div className="border-t border-gray-200/50 my-2"></div>
                   
-                  <button className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3">
+                  <button 
+                    onClick={() => signOut()}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100/50 transition-colors flex items-center gap-3"
+                  >
                     <ArrowLeftOnRectangleIcon className="w-4 h-4 text-gray-500" />
                     Sign out
                   </button>

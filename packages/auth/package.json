@@ -1,0 +1,16 @@
+{
+  "name": "@fabl/auth",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.28.0",
+    "@clerk/types": "^4.47.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
