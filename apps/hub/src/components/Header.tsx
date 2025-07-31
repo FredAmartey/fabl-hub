@@ -24,6 +24,7 @@ import { useUser } from "@/hooks/api/use-user";
 import { useNotifications, useMarkNotificationRead } from "@/hooks/api/use-notifications";
 import { formatDate } from "@fabl/utils";
 import { useUser as useClerkUser, SignInButton, useClerk } from "@clerk/nextjs";
+import { ApiHealthStatus } from "./ApiHealthStatus";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -125,6 +126,10 @@ export function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         <SearchBox className="flex-1 max-w-2xl mx-4" />
+        
+        <div className="mr-4">
+          <ApiHealthStatus />
+        </div>
 
         <div className="flex items-center gap-2">
           {isSignedIn ? (

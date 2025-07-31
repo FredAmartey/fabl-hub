@@ -8,6 +8,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.83.1",
+    "@fabl/types": "*",
     "zod": "^3.22.0"
   },
   "devDependencies": {

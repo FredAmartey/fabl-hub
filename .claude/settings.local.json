@@ -45,7 +45,8 @@
       "Bash(brew install:*)",
       "Bash(brew services start:*)",
       "Bash(export:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
