@@ -90,7 +90,6 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
     };
   }, [showUploadModal, showSettingsModal]);
 
-
   // Close user menu when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -103,6 +102,29 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showUserMenu]);
+
+  // Show loading state while checking authentication
+  if (!isLoaded) {
+    return (
+      <div className="flex h-screen bg-[#0a0a0f] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 via-pink-400 to-amber-300 flex items-center justify-center shadow-lg animate-pulse">
+            <SparklesIcon className="w-6 h-6 text-white" />
+          </div>
+          <div className="text-gray-400 text-sm">Loading Studio...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't show the layout for sign-in/sign-up pages or when not authenticated
+  if (!isSignedIn || pathname === '/sign-in' || pathname === '/sign-up') {
+    return (
+      <UploadProvider openUploadModal={() => {}}>
+        {children}
+      </UploadProvider>
+    );
+  }
 
   const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
