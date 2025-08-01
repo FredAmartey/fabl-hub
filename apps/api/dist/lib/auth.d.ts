@@ -9,6 +9,9 @@ declare module 'fastify' {
             orgSlug: string | null;
         };
     }
+    interface FastifyInstance {
+        requireAuth: (request: FastifyRequest) => string;
+    }
 }
 declare const authPlugin: FastifyPluginAsync;
 export { authPlugin };

@@ -2,8 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const typebox_1 = require("@sinclair/typebox");
 const search_indexing_1 = require("../services/search-indexing");
+const index_progress_tracker_1 = require("../services/index-progress-tracker");
 const searchRoutes = async (fastify) => {
-    const searchService = new search_indexing_1.SearchIndexingService(fastify.db);
+    // Initialize progress tracker with Redis if available
+    const progressTracker = fastify.cache?.getRedis()
+        ? new index_progress_tracker_1.IndexProgressTracker(fastify.cache.getRedis())
+        : undefined;
+    const searchService = new search_indexing_1.SearchIndexingService(fastify.db, progressTracker);
     // Search videos with enhanced indexing
     fastify.get('/', {
         schema: {
@@ -43,13 +48,24 @@ const searchRoutes = async (fastify) => {
     }, async (request, reply) => {
         const { q: query, limit = '20', offset = '0', category, sortBy = 'relevance' } = request.query;
         try {
+            // Generate cache key based on search parameters
+            const cacheKey = `search:${query}:${limit}:${offset}:${category || 'all'}:${sortBy}`;
+            // Try to get cached results
+            const cachedResult = await fastify.cache.get(cacheKey, {
+                prefix: 'search',
+                ttl: 300 // Cache for 5 minutes
+            });
+            if (cachedResult) {
+                return reply.send(cachedResult);
+            }
+            // If not cached, perform search
             const result = await searchService.searchVideos(query, {
                 limit: Math.min(parseInt(limit), 50),
                 offset: parseInt(offset),
                 category,
                 sortBy
             });
-            reply.send({
+            const response = {
                 success: true,
                 data: {
                     videos: result.videos.map((video) => ({
@@ -66,7 +82,13 @@ const searchRoutes = async (fastify) => {
                     suggestions: result.suggestions,
                     totalResults: result.total
                 }
+            };
+            // Cache the response
+            await fastify.cache.set(cacheKey, response, {
+                prefix: 'search',
+                ttl: 300 // Cache for 5 minutes
             });
+            reply.send(response);
         }
         catch (error) {
             fastify.log.error(error);
@@ -155,15 +177,31 @@ const searchRoutes = async (fastify) => {
         preHandler: [
         // Add admin auth check here if needed
         // For now, we'll leave it open but log the action
-        ]
+        ],
+        schema: {
+            response: {
+                200: typebox_1.Type.Object({
+                    success: typebox_1.Type.Boolean(),
+                    message: typebox_1.Type.String(),
+                    data: typebox_1.Type.Object({
+                        indexed: typebox_1.Type.Number(),
+                        errors: typebox_1.Type.Number(),
+                        totalProcessed: typebox_1.Type.Number(),
+                        progressId: typebox_1.Type.String()
+                    })
+                })
+            }
+        }
     }, async (request, reply) => {
         try {
             fastify.log.info('Starting search index rebuild...');
-            const result = await searchService.rebuildSearchIndex();
+            const result = await searchService.rebuildSearchIndex({
+                logger: fastify.log
+            });
             fastify.log.info(`Search index rebuild completed. Indexed: ${result.indexed}, Errors: ${result.errors}`);
             reply.send({
                 success: true,
-                message: 'Search index rebuilt successfully',
+                message: 'Search index rebuild successfully',
                 data: result
             });
         }
@@ -174,6 +212,79 @@ const searchRoutes = async (fastify) => {
                 message: 'Failed to rebuild search index'
             });
         }
+    });
+    // Get search index rebuild progress
+    fastify.get('/rebuild-progress/:id', {
+        schema: {
+            params: typebox_1.Type.Object({
+                id: typebox_1.Type.String()
+            }),
+            response: {
+                200: typebox_1.Type.Object({
+                    id: typebox_1.Type.String(),
+                    status: typebox_1.Type.Union([
+                        typebox_1.Type.Literal('pending'),
+                        typebox_1.Type.Literal('running'),
+                        typebox_1.Type.Literal('completed'),
+                        typebox_1.Type.Literal('failed')
+                    ]),
+                    totalItems: typebox_1.Type.Number(),
+                    processedItems: typebox_1.Type.Number(),
+                    successfulItems: typebox_1.Type.Number(),
+                    failedItems: typebox_1.Type.Number(),
+                    startedAt: typebox_1.Type.Optional(typebox_1.Type.String()),
+                    completedAt: typebox_1.Type.Optional(typebox_1.Type.String()),
+                    error: typebox_1.Type.Optional(typebox_1.Type.String()),
+                    lastUpdatedAt: typebox_1.Type.String()
+                })
+            }
+        }
+    }, async (request, reply) => {
+        const { id } = request.params;
+        if (!progressTracker) {
+            return reply.status(501).send({
+                error: 'Progress tracking not available (Redis not configured)'
+            });
+        }
+        const progress = await progressTracker.get(id);
+        if (!progress) {
+            return reply.status(404).send({ error: 'Progress not found' });
+        }
+        reply.send({
+            ...progress,
+            startedAt: progress.startedAt?.toISOString(),
+            completedAt: progress.completedAt?.toISOString(),
+            lastUpdatedAt: progress.lastUpdatedAt.toISOString()
+        });
+    });
+    // List all search index rebuild jobs
+    fastify.get('/rebuild-progress', {
+        schema: {
+            response: {
+                200: typebox_1.Type.Array(typebox_1.Type.Object({
+                    id: typebox_1.Type.String(),
+                    status: typebox_1.Type.String(),
+                    totalItems: typebox_1.Type.Number(),
+                    processedItems: typebox_1.Type.Number(),
+                    successfulItems: typebox_1.Type.Number(),
+                    failedItems: typebox_1.Type.Number(),
+                    lastUpdatedAt: typebox_1.Type.String()
+                }))
+            }
+        }
+    }, async (request, reply) => {
+        if (!progressTracker) {
+            return reply.status(501).send({
+                error: 'Progress tracking not available (Redis not configured)'
+            });
+        }
+        const progressList = await progressTracker.list();
+        reply.send(progressList.map(progress => ({
+            ...progress,
+            startedAt: progress.startedAt?.toISOString(),
+            completedAt: progress.completedAt?.toISOString(),
+            lastUpdatedAt: progress.lastUpdatedAt.toISOString()
+        })));
     });
 };
 exports.default = searchRoutes;

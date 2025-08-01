@@ -1,4 +1,5 @@
 import { PrismaClient } from '@fabl/db';
+import { IndexProgressTracker } from './index-progress-tracker';
 interface SearchIndex {
     id: string;
     title: string;
@@ -13,16 +14,27 @@ interface SearchIndex {
 }
 export declare class SearchIndexingService {
     private prisma;
-    constructor(prisma: PrismaClient);
+    private progressTracker;
+    constructor(prisma: PrismaClient, progressTracker?: IndexProgressTracker);
     private extractSearchTerms;
     private isStopWord;
     private generateSearchSuggestions;
     indexVideo(videoId: string): Promise<SearchIndex | null>;
     private extractTags;
     private inferCategory;
-    rebuildSearchIndex(): Promise<{
+    rebuildSearchIndex(options?: {
+        batchSize?: number;
+        delayMs?: number;
+        logger?: {
+            info: (msg: string) => void;
+            error: (msg: string, error?: any) => void;
+        };
+        progressId?: string;
+    }): Promise<{
         indexed: number;
         errors: number;
+        totalProcessed: number;
+        progressId: string;
     }>;
     searchVideos(query: string, options?: {
         limit?: number;

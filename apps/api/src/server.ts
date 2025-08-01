@@ -193,6 +193,12 @@ async function start() {
     await server.register(queuePlugin)
     await server.register(authPlugin)
 
+    // Enhanced logging with monitoring
+    const { enhancedLoggingPlugin } = await import('./lib/logger')
+    const { monitoringPlugin } = await import('./lib/monitoring')
+    await server.register(enhancedLoggingPlugin)
+    await server.register(monitoringPlugin)
+
     // Register error handler
     server.setErrorHandler(errorHandler)
 

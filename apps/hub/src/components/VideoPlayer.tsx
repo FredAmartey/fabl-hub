@@ -56,8 +56,21 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
     }
   }, [currentTime, duration, viewTracked, video.id, user?.id]);
 
-  // For development, use a demo video if no Mux playback ID
-  const playbackId = video.muxPlaybackId || 'LvZ1O8vZHEecmv02kBQG00AjgapWqWRXHF8ByNWXDCIAE';
+  // Check if video has valid Mux playback ID
+  const playbackId = video.muxPlaybackId
+  
+  // Handle missing playback ID
+  if (!playbackId) {
+    return (
+      <div className="relative aspect-video bg-gray-900 rounded-xl overflow-hidden flex items-center justify-center">
+        <div className="text-center p-8">
+          <AlertCircleIcon className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
+          <h3 className="text-white font-semibold mb-2">Video Processing</h3>
+          <p className="text-gray-400 text-sm">This video is still being processed. Please check back later.</p>
+        </div>
+      </div>
+    )
+  }
 
   const handlePlayPause = () => {
     if (playerRef.current) {

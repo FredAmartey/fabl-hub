@@ -1,0 +1,54 @@
+# Production Dockerfile for Fabl Studio
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY packages/db/package*.json ./packages/db/
+COPY packages/types/package*.json ./packages/types/
+COPY packages/utils/package*.json ./packages/utils/
+COPY apps/studio/package*.json ./apps/studio/
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY packages/ ./packages/
+COPY apps/studio/ ./apps/studio/
+
+# Build the Studio app
+WORKDIR /app/apps/studio
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine AS production
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# Copy built application
+COPY --from=builder --chown=nodejs:nodejs /app/apps/studio/.next ./apps/studio/.next
+COPY --from=builder --chown=nodejs:nodejs /app/apps/studio/package*.json ./apps/studio/
+COPY --from=builder --chown=nodejs:nodejs /app/apps/studio/public ./apps/studio/public
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
+
+# Install only production dependencies
+RUN npm ci --only=production --prefix ./apps/studio && npm cache clean --force
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
+# Start the application
+CMD ["npm", "start", "--prefix", "apps/studio"]

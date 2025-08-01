@@ -14,6 +14,7 @@ interface UploadFile {
   progress: number
   status: 'uploading' | 'processing' | 'completed' | 'error'
   uploadId?: string // Mux upload ID
+  errorMessage?: string // Error details for failed uploads
 }
 
 interface VideoDetails {
@@ -200,8 +201,26 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
     setUploadedFiles([newFile])
     
     try {
+      // Validate file before upload
+      const maxFileSize = 5 * 1024 * 1024 * 1024 // 5GB
+      const allowedTypes = ['video/mp4', 'video/mov', 'video/avi', 'video/mkv', 'video/webm']
+      
+      if (file.size > maxFileSize) {
+        throw new Error(`File size too large. Maximum allowed: ${maxFileSize / (1024 * 1024 * 1024)}GB`)
+      }
+      
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(`Unsupported file type: ${file.type}. Allowed types: ${allowedTypes.join(', ')}`)
+      }
+
       // Request upload URL from Mux API
       console.log('Requesting upload URL...')
+      setUploadedFiles(prev => prev.map(f => 
+        f.id === newFile.id 
+          ? { ...f, status: 'uploading', progress: 0 }
+          : f
+      ))
+
       const uploadResponse = await requestUploadUrl.mutateAsync({
         fileName: file.name,
         fileSize: file.size,
@@ -222,17 +241,32 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
       
     } catch (error) {
       console.error('Upload failed:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Upload failed unexpectedly'
+      
       setUploadedFiles(prev => prev.map(f => 
         f.id === newFile.id 
-          ? { ...f, status: 'error', progress: 0 }
+          ? { 
+              ...f, 
+              status: 'error', 
+              progress: 0,
+              errorMessage 
+            }
           : f
       ))
+      
+      // Show user-friendly error notification
+      alert(`Upload failed: ${errorMessage}`)
     }
   }
 
   const uploadFileWithProgress = (file: File, uploadUrl: string, fileId: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest()
+      let retryCount = 0
+      const maxRetries = 3
+      
+      // Set timeout for uploads (30 minutes)
+      xhr.timeout = 30 * 60 * 1000
       
       // Track upload progress
       xhr.upload.addEventListener('progress', (event) => {
@@ -242,7 +276,12 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
           
           setUploadedFiles(prev => prev.map(f => 
             f.id === fileId 
-              ? { ...f, progress, status: progress >= 100 ? 'processing' : 'uploading' }
+              ? { 
+                  ...f, 
+                  progress, 
+                  status: progress >= 100 ? 'processing' : 'uploading',
+                  errorMessage: undefined // Clear any previous errors
+                }
               : f
           ))
         }
@@ -255,7 +294,7 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
           
           setUploadedFiles(prev => prev.map(f => 
             f.id === fileId 
-              ? { ...f, progress: 100, status: 'completed' }
+              ? { ...f, progress: 100, status: 'completed', errorMessage: undefined }
               : f
           ))
           
@@ -278,21 +317,69 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
           
           resolve()
         } else {
-          console.error('Upload failed with status:', xhr.status)
-          reject(new Error(`Upload failed: ${xhr.status}`))
+          const errorMessage = `Upload failed with status ${xhr.status}${xhr.statusText ? ': ' + xhr.statusText : ''}`
+          console.error(errorMessage)
+          
+          // Update UI with error
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === fileId 
+              ? { ...f, status: 'error', progress: 0, errorMessage }
+              : f
+          ))
+          
+          reject(new Error(errorMessage))
         }
       })
       
       // Handle upload errors
       xhr.addEventListener('error', () => {
-        console.error('Upload error for file:', fileId)
-        reject(new Error('Upload failed'))
+        const errorMessage = 'Network error during upload'
+        console.error(errorMessage, 'for file:', fileId)
+        
+        setUploadedFiles(prev => prev.map(f => 
+          f.id === fileId 
+            ? { ...f, status: 'error', progress: 0, errorMessage }
+            : f
+        ))
+        
+        reject(new Error(errorMessage))
+      })
+      
+      // Handle upload timeout
+      xhr.addEventListener('timeout', () => {
+        const errorMessage = 'Upload timed out. Please try again with a smaller file or better internet connection.'
+        console.error(errorMessage, 'for file:', fileId)
+        
+        setUploadedFiles(prev => prev.map(f => 
+          f.id === fileId 
+            ? { ...f, status: 'error', progress: 0, errorMessage }
+            : f
+        ))
+        
+        reject(new Error(errorMessage))
+      })
+      
+      // Handle upload abort
+      xhr.addEventListener('abort', () => {
+        const errorMessage = 'Upload was cancelled'
+        console.log(errorMessage, 'for file:', fileId)
+        
+        setUploadedFiles(prev => prev.map(f => 
+          f.id === fileId 
+            ? { ...f, status: 'error', progress: 0, errorMessage }
+            : f
+        ))
+        
+        reject(new Error(errorMessage))
       })
       
       // Start the upload
       xhr.open('PUT', uploadUrl)
       xhr.setRequestHeader('Content-Type', file.type)
       xhr.send(file)
+      
+      // Store xhr reference for potential cancellation
+      ;(file as any).xhr = xhr
     })
   }
 

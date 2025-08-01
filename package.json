@@ -23,7 +23,7 @@
     "lint": "npm-run-all lint:*",
     "lint:hub": "cd apps/hub && npm run lint",
     "lint:studio": "cd apps/studio && npm run lint",
-    "lint:api": "echo 'No linting configured for API yet'",
+    "lint:api": "cd apps/api && npm run lint",
     "typecheck": "npm-run-all typecheck:*",
     "typecheck:hub": "cd apps/hub && npm run typecheck",
     "typecheck:studio": "cd apps/studio && npm run typecheck",

@@ -1,11 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.errorHandler = errorHandler;
-const client_1 = require("@prisma/client");
 function errorHandler(error, request, reply) {
     const { log } = request;
     // Handle Prisma errors
-    if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
         switch (error.code) {
             case 'P2002':
                 return reply.status(409).send({

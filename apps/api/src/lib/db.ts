@@ -11,7 +11,15 @@ declare module 'fastify' {
 const dbPlugin: FastifyPluginAsync = fp(async (fastify) => {
   const db = new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
-    errorFormat: 'pretty'
+    errorFormat: 'pretty',
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL
+      }
+    }
+    // NOTE: Prisma connection pooling is handled at the DATABASE_URL level
+    // For production, use connection poolers like PgBouncer or connection pool in DATABASE_URL
+    // Example: postgresql://user:pass@localhost:5432/db?connection_limit=10&pool_timeout=10
   })
 
   // Test database connection

@@ -467,15 +467,37 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Video not found' })
       }
 
-      // TODO: Implement view deduplication logic here
-      // For now, just increment the view count
-      const updatedVideo = await fastify.db.video.update({
-        where: { id },
-        data: { views: { increment: 1 } }
-      })
+      // View deduplication: Check if same user/IP has viewed recently
+      const viewKey = `view:${id}:${userId || request.ip || 'anonymous'}`
+      const recentView = await fastify.cache.get(viewKey)
+      
+      let shouldIncrement = false
+      if (!recentView) {
+        // First view from this user/IP in the last hour
+        shouldIncrement = true
+        await fastify.cache.set(viewKey, Date.now(), { ttl: 3600 }) // 1 hour cooldown
+      }
 
-      // TODO: Store view analytics data
-      // This could include watch time, user ID, timestamp, etc.
+      // Increment view count only if it's a new unique view
+      const updatedVideo = shouldIncrement 
+        ? await fastify.db.video.update({
+            where: { id },
+            data: { views: { increment: 1 } }
+          })
+        : video
+
+      // Store detailed view analytics data
+      await fastify.db.viewEvent.create({
+        data: {
+          videoId: id,
+          userId: userId || null,
+          watchTime: watchTime || 0,
+          completed: watchTime ? watchTime >= 30 : false, // Consider 30+ seconds as meaningful view
+        }
+      }).catch(err => {
+        // Log error but don't fail the request
+        fastify.log.error({ err, videoId: id }, 'Failed to store view analytics')
+      })
 
       return {
         success: true,
