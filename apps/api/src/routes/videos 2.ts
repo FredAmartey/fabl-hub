@@ -1,160 +1,5 @@
 import { FastifyPluginAsync } from 'fastify'
 import { Type } from '@sinclair/typebox'
-import { CacheKeyBuilder, CACHE_CONFIG } from '../lib/cache'
-
-// Request parsing utilities
-interface VideoListQuery {
-  page?: string
-  limit?: string
-  status?: string
-  creatorId?: string
-}
-
-interface ParsedVideoListRequest {
-  query: VideoListQuery
-  pagination: {
-    page: number
-    limit: number
-    skip: number
-  }
-  where: any
-}
-
-function parseVideoListRequest(request: any): ParsedVideoListRequest {
-  const query = request.query as VideoListQuery
-  const page = parseInt(query.page || '1', 10)
-  const limit = Math.min(parseInt(query.limit || '20', 10), 100)
-  const skip = (page - 1) * limit
-
-  const where: any = {
-    status: 'PUBLISHED',
-    isApproved: true
-  }
-
-  if (query.creatorId) {
-    where.creatorId = query.creatorId
-    delete where.status
-    delete where.isApproved
-  }
-
-  return {
-    query,
-    pagination: { page, limit, skip },
-    where
-  }
-}
-
-// Database operations
-async function fetchVideosFromDatabase(fastify: any, where: any, skip: number, limit: number) {
-  return Promise.all([
-    fastify.db.video.findMany({
-      where,
-      include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatarUrl: true
-          }
-        }
-      },
-      orderBy: { publishedAt: 'desc' },
-      skip,
-      take: limit
-    }),
-    fastify.db.video.count({ where })
-  ])
-}
-
-// Response formatting
-function formatVideoListResponse(videos: any[], total: number, page: number, limit: number) {
-  return {
-    videos: videos.map(video => ({
-      id: video.id,
-      title: video.title,
-      description: video.description,
-      thumbnailUrl: video.thumbnailUrl,
-      duration: video.duration,
-      views: video.views,
-      createdAt: video.createdAt.toISOString(),
-      publishedAt: video.publishedAt?.toISOString(),
-      creator: video.creator
-    })),
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit)
-    }
-  }
-}
-
-// Main business logic
-async function getVideoList(fastify: any, parsedRequest: ParsedVideoListRequest) {
-  const { where, pagination } = parsedRequest
-  const [videos, total] = await fetchVideosFromDatabase(fastify, where, pagination.skip, pagination.limit)
-  return formatVideoListResponse(videos, total, pagination.page, pagination.limit)
-}
-
-// Video detail operations
-async function fetchVideoFromDatabase(fastify: any, videoId: string) {
-  return fastify.db.video.findUnique({
-    where: { id: videoId },
-    include: {
-      creator: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          avatarUrl: true,
-          subscriberCount: true
-        }
-      },
-      _count: {
-        select: {
-          likes: true
-        }
-      }
-    }
-  })
-}
-
-function formatVideoDetailResponse(video: any) {
-  return {
-    id: video.id,
-    title: video.title,
-    description: video.description,
-    thumbnailUrl: video.thumbnailUrl,
-    videoUrl: video.videoUrl,
-    muxPlaybackId: video.muxPlaybackId,
-    duration: video.duration,
-    views: video.views,
-    likes: video._count.likes,
-    status: video.status,
-    createdAt: video.createdAt.toISOString(),
-    publishedAt: video.publishedAt?.toISOString(),
-    creator: video.creator
-  }
-}
-
-async function getVideoDetails(fastify: any, videoId: string) {
-  const video = await fetchVideoFromDatabase(fastify, videoId)
-  
-  if (!video) {
-    throw new Error('Video not found')
-  }
-
-  return formatVideoDetailResponse(video)
-}
-
-async function incrementVideoViews(fastify: any, videoId: string) {
-  // Increment view count in background, don't await
-  fastify.db.video.update({
-    where: { id: videoId },
-    data: { views: { increment: 1 } }
-  }).catch((err: any) => fastify.log.error({ err, videoId }, 'Failed to increment view count'))
-}
 
 const videoRoutes: FastifyPluginAsync = async (fastify) => {
   // Get videos with pagination and filters
@@ -194,21 +39,60 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request) => {
-    const parsedRequest = parseVideoListRequest(request)
-    const cacheKey = CacheKeyBuilder.videoList(
-      parsedRequest.query, 
-      parsedRequest.pagination.page, 
-      parsedRequest.pagination.limit
-    )
-    
-    return await fastify.cache.wrap(
-      cacheKey,
-      () => getVideoList(fastify, parsedRequest),
-      { 
-        prefix: 'api',
-        ttl: CACHE_CONFIG.VIDEO_LIST_TTL
+    const page = parseInt(request.query.page || '1', 10)
+    const limit = Math.min(parseInt(request.query.limit || '20', 10), 100)
+    const skip = (page - 1) * limit
+
+    const where: any = {
+      status: 'PUBLISHED', // Only show published videos by default
+      isApproved: true
+    }
+
+    if (request.query.creatorId) {
+      where.creatorId = request.query.creatorId
+      delete where.status // Allow creator to see all their videos
+      delete where.isApproved
+    }
+
+    const [videos, total] = await Promise.all([
+      fastify.db.video.findMany({
+        where,
+        include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              avatarUrl: true
+            }
+          }
+        },
+        orderBy: { publishedAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      fastify.db.video.count({ where })
+    ])
+
+    return {
+      videos: videos.map(video => ({
+        id: video.id,
+        title: video.title,
+        description: video.description,
+        thumbnailUrl: video.thumbnailUrl,
+        duration: video.duration,
+        views: video.views,
+        createdAt: video.createdAt.toISOString(),
+        publishedAt: video.publishedAt?.toISOString(),
+        creator: video.creator
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
       }
-    )
+    }
   })
 
   // Get single video
@@ -242,29 +126,52 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
-    const { id } = request.params as { id: string }
-    const cacheKey = CacheKeyBuilder.videoDetail(id)
+    const { id } = request.params
 
-    try {
-      // Get video details with caching
-      const video = await fastify.cache.wrap(
-        cacheKey,
-        () => getVideoDetails(fastify, id),
-        { 
-          prefix: 'api',
-          ttl: CACHE_CONFIG.VIDEO_DETAIL_TTL
+    const video = await fastify.db.video.findUnique({
+      where: { id },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatarUrl: true,
+            subscriberCount: true
+          }
+        },
+        _count: {
+          select: {
+            likes: true
+          }
         }
-      )
-
-      // Increment view count in background (don't cache this)
-      incrementVideoViews(fastify, id)
-
-      return video
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Video not found') {
-        return reply.status(404).send({ error: 'Video not found' })
       }
-      throw error
+    })
+
+    if (!video) {
+      return reply.status(404).send({ error: 'Video not found' })
+    }
+
+    // Increment view count (in background)
+    fastify.db.video.update({
+      where: { id },
+      data: { views: { increment: 1 } }
+    }).catch(err => fastify.log.error({ err, videoId: id }, 'Failed to increment view count'))
+
+    return {
+      id: video.id,
+      title: video.title,
+      description: video.description,
+      thumbnailUrl: video.thumbnailUrl,
+      videoUrl: video.videoUrl,
+      muxPlaybackId: video.muxPlaybackId,
+      duration: video.duration,
+      views: video.views,
+      likes: video._count.likes,
+      status: video.status,
+      createdAt: video.createdAt.toISOString(),
+      publishedAt: video.publishedAt?.toISOString(),
+      creator: video.creator
     }
   })
 
@@ -291,16 +198,11 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     const userId = (fastify as any).requireAuth(request)
-    const videoData = request.body as any
+    const videoData = request.body
 
     const video = await fastify.db.video.create({
       data: {
-        title: videoData.title,
-        description: videoData.description,
-        videoUrl: videoData.videoUrl,
-        muxAssetId: videoData.muxAssetId,
-        muxPlaybackId: videoData.muxPlaybackId,
-        thumbnailUrl: videoData.thumbnailUrl,
+        ...videoData,
         creatorId: userId,
         duration: videoData.duration || 0
       }
@@ -338,8 +240,7 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     const userId = (fastify as any).requireAuth(request)
-    const params = request.params as any
-    const { id } = params
+    const { id } = request.params
 
     // Verify ownership
     const existingVideo = await fastify.db.video.findUnique({
@@ -358,8 +259,8 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
     const video = await fastify.db.video.update({
       where: { id },
       data: {
-        ...(request.body as Record<string, any>),
-        ...((request.body as any).status === 'PUBLISHED' && { publishedAt: new Date() })
+        ...request.body,
+        ...(request.body.status === 'PUBLISHED' && { publishedAt: new Date() })
       }
     })
 
@@ -396,8 +297,7 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     const userId = (fastify as any).requireAuth(request)
-    const params = request.params as any
-    const { id } = params
+    const { id } = request.params
 
     // Verify ownership
     const existingVideo = await fastify.db.video.findUnique({
@@ -451,10 +351,8 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
-    const params = request.params as any
-    const { id } = params
-    const body = request.body as any || {}
-    const { watchTime, userId } = body
+    const { id } = request.params
+    const { watchTime, userId } = request.body || {}
 
     try {
       // Check if video exists
@@ -503,8 +401,7 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     const userId = (fastify as any).requireAuth(request)
-    const params = request.params as any
-    const { id } = params
+    const { id } = request.params
 
     try {
       // Check if video exists
@@ -597,10 +494,9 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
-    const { id } = request.params as { id: string }
-    const commentQuery = request.query as any
-    const page = parseInt(commentQuery.page || '1', 10)
-    const limit = Math.min(parseInt(commentQuery.limit || '20', 10), 50)
+    const { id } = request.params
+    const page = parseInt(request.query.page || '1', 10)
+    const limit = Math.min(parseInt(request.query.limit || '20', 10), 50)
     const skip = (page - 1) * limit
 
     try {
@@ -714,10 +610,8 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     const userId = (fastify as any).requireAuth(request)
-    const params = request.params as any
-    const { id } = params
-    const body = request.body as any
-    const { content, parentId } = body
+    const { id } = request.params
+    const { content, parentId } = request.body
 
     try {
       // Check if video exists

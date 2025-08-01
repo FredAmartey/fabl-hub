@@ -1,59 +1,24 @@
+"use client";
+
 import React from "react";
 import { Button } from "../../components/Button";
 import { VideoCard } from "../../components/VideoCard";
+import { VideoCardSkeleton } from "../../components/VideoCardSkeleton";
 import { BookmarkIcon } from "lucide-react";
+import { useVideoList } from "@/hooks/use-videos";
 
 export default function SubscriptionsPage() {
-  const subscriptionVideos = [
-    {
-      id: 2,
-      title: "Synthetic Storytelling: The Last Cosmic Voyager",
-      channel: "StoryForge AI",
-      views: "856K",
-      timestamp: "1 week ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "15:42",
-    },
-    {
-      id: 8,
-      title: "Synthetic Stories: Whispers of Digital Consciousness",
-      channel: "StoryForge AI",
-      views: "723K",
-      timestamp: "2 days ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "14:32",
-    },
-  ];
+  // TODO: Replace with actual subscriptions API when implemented
+  const { data: videosResponse, isLoading, error } = useVideoList({
+    limit: 20,
+    orderBy: 'createdAt',
+    order: 'desc'
+  });
 
-  const subscribedChannels = [
-    {
-      id: 1,
-      name: "StoryForge AI",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&auto=format&fit=crop&crop=faces",
-      subscribers: "2.4M",
-    },
-    {
-      id: 2,
-      name: "AI Wanderer",
-      avatar:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&auto=format&fit=crop&crop=faces",
-      subscribers: "1.8M",
-    },
-    {
-      id: 3,
-      name: "Harmonic AI",
-      avatar:
-        "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&auto=format&fit=crop&crop=faces",
-      subscribers: "3.2M",
-    },
-  ];
+  const subscriptionVideos = videosResponse?.data || [];
+
+  // TODO: Replace with actual subscriptions API when implemented
+  const subscribedChannels: any[] = [];
 
   return (
     <div className="px-6 pt-6">
@@ -90,11 +55,31 @@ export default function SubscriptionsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {subscriptionVideos.map((video) => (
-          <VideoCard key={video.id} video={video} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array(8).fill(0).map((_, index) => (
+            <VideoCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="text-center py-16">
+          <div className="text-red-400 mb-4">Failed to load subscription videos</div>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      ) : subscriptionVideos.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {subscriptionVideos.map((video) => (
+            <VideoCard key={video.id} video={video} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16">
+          <BookmarkIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <h2 className="text-xl font-medium mb-2">No subscription videos yet</h2>
+          <p className="text-gray-400 mb-6">Subscribe to channels to see their latest videos</p>
+          <Button variant="primary">Explore Channels</Button>
+        </div>
+      )}
 
       <div className="mt-8 text-center">
         <p className="text-gray-400 mb-4">Discover more AI content creators</p>

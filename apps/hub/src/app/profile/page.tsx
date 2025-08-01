@@ -10,142 +10,67 @@ import {
   BellIcon,
   ShareIcon,
   UsersIcon,
-  ClockIcon,
-  BookmarkIcon,
-  BarChart3Icon,
-  ExternalLinkIcon,
 } from "lucide-react";
 import { Button } from "@/components/Button";
 import { VideoCard } from "@/components/VideoCard";
-import { useUser } from "@/hooks/api/use-user";
-import { Video, VideoStatus } from "@fabl/types";
-import { formatNumber } from "@/lib/utils";
+import { VideoCardSkeleton } from "@/components/VideoCardSkeleton";
+import { useVideoList } from "@/hooks/use-videos";
+import { useUser as useClerkUser } from "@clerk/nextjs";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("videos");
-
+  const { user: clerkUser } = useClerkUser();
+  
+  // Use real user data or fallback to placeholder
   const user = {
-    name: "Alex Neural",
-    username: "alexneural",
-    avatar:
-      "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=150&h=150&auto=format&fit=crop&crop=faces",
-    banner:
-      "https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=1200&auto=format&fit=crop",
-    bio: "AI enthusiast and digital creator. I make videos exploring the creative potential of artificial intelligence and neural networks.",
-    subscribers: "12.4K",
-    joined: "March 2022",
+    name: clerkUser?.fullName || clerkUser?.firstName || "Anonymous User",
+    username: clerkUser?.username || "user",
+    avatar: clerkUser?.imageUrl || "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=150&h=150&auto=format&fit=crop&crop=faces",
+    banner: "https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=1200&auto=format&fit=crop",
+    bio: "AI enthusiast and digital creator exploring the creative potential of artificial intelligence.",
+    subscribers: "0", // TODO: Connect to real subscriber count
+    joined: clerkUser?.createdAt ? new Date(clerkUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "Recently",
     location: "Digital Realm",
     links: {
-      website: "https://example.com",
-      twitter: "@alexneural",
-      instagram: "@alex.neural",
+      website: "",
+      twitter: "",
+      instagram: "",
     },
   };
 
-  const userVideos = [
-    {
-      id: 101,
-      title: "Creating Digital Art with Neural Style Transfer",
-      channel: "Alex Neural",
-      views: "8.2K",
-      timestamp: "2 weeks ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop",
-      avatar: user.avatar,
-      duration: "18:42",
-    },
-    {
-      id: 102,
-      title: "How I Made This Music with AI",
-      channel: "Alex Neural",
-      views: "12.5K",
-      timestamp: "1 month ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=800&auto=format&fit=crop",
-      avatar: user.avatar,
-      duration: "22:18",
-    },
-    {
-      id: 103,
-      title: "Neural Networks Explained: A Visual Guide",
-      channel: "Alex Neural",
-      views: "32.7K",
-      timestamp: "3 months ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
-      avatar: user.avatar,
-      duration: "15:24",
-    },
-    {
-      id: 104,
-      title: "The Future of AI Art Generation",
-      channel: "Alex Neural",
-      views: "18.3K",
-      timestamp: "5 months ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1617791160536-598cf32026fb?q=80&w=800&auto=format&fit=crop",
-      avatar: user.avatar,
-      duration: "28:05",
-    },
-  ];
+  // Fetch user's videos - TODO: Replace with actual user-specific API
+  const { data: videosResponse, isLoading: videosLoading } = useVideoList({
+    limit: 12,
+    orderBy: 'createdAt',
+    order: 'desc'
+  });
 
-  const playlists = [
-    {
-      id: 1,
-      title: "AI Art Tutorials",
-      videos: 8,
-      thumbnail:
-        "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      id: 2,
-      title: "Neural Music Experiments",
-      videos: 5,
-      thumbnail:
-        "https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=800&auto=format&fit=crop",
-    },
-    {
-      id: 3,
-      title: "AI Technology Explained",
-      videos: 12,
-      thumbnail:
-        "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=800&auto=format&fit=crop",
-    },
-  ];
+  const userVideos = videosResponse?.data || [];
 
-  const likedVideos = [
-    {
-      id: 3,
-      title: "AI Generated Music: Symphony of Digital Emotions",
-      channel: "Harmonic AI",
-      views: "2.3M",
-      timestamp: "2 weeks ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "8:17",
-    },
-    {
-      id: 6,
-      title: "Digital Art Evolution: From Pixels to Neural Networks",
-      channel: "ArtMatrix",
-      views: "932K",
-      timestamp: "1 day ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "22:14",
-    },
-  ];
+  // TODO: Replace with real playlist API when implemented
+  const playlists: any[] = [];
+
+  // TODO: Replace with real liked videos API when implemented  
+  const likedVideos: any[] = [];
 
   const tabContent = {
-    videos: (
+    videos: videosLoading ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array(8).fill(0).map((_, index) => (
+          <VideoCardSkeleton key={index} />
+        ))}
+      </div>
+    ) : userVideos.length > 0 ? (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {userVideos.map((video) => (
           <VideoCard key={video.id} video={video} />
         ))}
+      </div>
+    ) : (
+      <div className="text-center py-16">
+        <VideoIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+        <h3 className="text-xl font-medium mb-2">No videos yet</h3>
+        <p className="text-gray-400">Start creating to see your videos here</p>
       </div>
     ),
     playlists: (

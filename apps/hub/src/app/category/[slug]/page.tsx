@@ -2,6 +2,8 @@
 
 import React, { use } from "react";
 import { VideoCard } from "../../../components/VideoCard";
+import { VideoCardSkeleton } from "../../../components/VideoCardSkeleton";
+import { useVideoList } from "@/hooks/use-videos";
 
 interface CategoryPageProps {
   params: Promise<{
@@ -62,58 +64,14 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const categoryName = categoryInfo.name;
   const categoryDescription = categoryInfo.description;
 
-  // Sample videos filtered by category
-  const categoryVideos = [
-    {
-      id: 1,
-      title: "Neural Dream Journey Through Ancient Civilizations",
-      channel: "AI Wanderer",
-      views: "1.2M",
-      timestamp: "3 days ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "10:23",
-      trending: true,
-    },
-    {
-      id: 2,
-      title: "Synthetic Storytelling: The Last Cosmic Voyager",
-      channel: "StoryForge AI",
-      views: "856K",
-      timestamp: "1 week ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "15:42",
-    },
-    {
-      id: 10,
-      title: `Exploring ${categoryName}: A Deep Dive`,
-      channel: "AI Explorer",
-      views: "542K",
-      timestamp: "1 week ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "18:30",
-    },
-    {
-      id: 11,
-      title: `The Future of ${categoryName} Technology`,
-      channel: "Tech Forward",
-      views: "328K",
-      timestamp: "3 days ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "12:45",
-    },
-  ];
+  // TODO: Replace with actual category-specific API when implemented
+  const { data: videosResponse, isLoading, error } = useVideoList({
+    limit: 16,
+    orderBy: 'createdAt',
+    order: 'desc'
+  });
+
+  const categoryVideos = videosResponse?.data || [];
 
   return (
     <div className="px-6 pt-6">
@@ -123,11 +81,34 @@ export default function CategoryPage({ params }: CategoryPageProps) {
         </h1>
         <p className="text-gray-400 mt-1">{categoryDescription}</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {categoryVideos.map((video) => (
-          <VideoCard key={video.id} video={video} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array(12).fill(0).map((_, index) => (
+            <VideoCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="text-center py-16">
+          <div className="text-red-400 mb-4">Failed to load category videos</div>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      ) : categoryVideos.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {categoryVideos.map((video) => (
+            <VideoCard key={video.id} video={video} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16">
+          <div className="text-gray-600 mb-4">No videos found in this category</div>
+          <p className="text-gray-400 mb-6">Check back later for new content</p>
+        </div>
+      )}
     </div>
   );
 }

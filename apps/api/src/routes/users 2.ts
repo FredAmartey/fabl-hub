@@ -69,7 +69,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     const userId = (fastify as any).requireAuth(request)
-    const { name, channelName } = request.body as { name: string; channelName: string }
+    const { name, channelName } = request.body
 
     const user = await fastify.db.user.update({
       where: { id: userId },
@@ -113,7 +113,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
-    const { identifier } = request.params as { identifier: string }
+    const { identifier } = request.params
 
     const user = await fastify.db.user.findFirst({
       where: {

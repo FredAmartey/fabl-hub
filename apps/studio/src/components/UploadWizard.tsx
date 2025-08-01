@@ -639,7 +639,7 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
                            'Starting...'}
                         </span>
                       </div>
-                      {requestUploadUrl.isLoading && (
+                      {requestUploadUrl.isPending && (
                         <div className="text-xs text-gray-500 mt-1">Preparing upload...</div>
                       )}
                     </div>
@@ -1089,10 +1089,10 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
             ) : (
               <button
                 onClick={handlePublish}
-                disabled={completeUpload.isLoading}
+                disabled={completeUpload.isPending}
                 className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all duration-200 text-sm"
               >
-                {completeUpload.isLoading ? (
+                {completeUpload.isPending ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     Publishing...

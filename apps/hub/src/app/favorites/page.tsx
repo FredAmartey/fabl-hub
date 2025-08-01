@@ -1,37 +1,22 @@
+"use client";
+
 import React from "react";
 import { Button } from "../../components/Button";
 import { VideoCard } from "../../components/VideoCard";
+import { VideoCardSkeleton } from "../../components/VideoCardSkeleton";
 import { HeartIcon } from "lucide-react";
+import { useVideoList } from "@/hooks/use-videos";
 
 export default function FavoritesPage() {
-  const favoriteVideos = [
-    {
-      id: 3,
-      title: "AI Generated Music: Symphony of Digital Emotions",
-      channel: "Harmonic AI",
-      views: "2.3M",
-      timestamp: "2 weeks ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1614149162883-504ce4d13909?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "8:17",
-      trending: true,
-    },
-    {
-      id: 6,
-      title: "Digital Art Evolution: From Pixels to Neural Networks",
-      channel: "ArtMatrix",
-      views: "932K",
-      timestamp: "1 day ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "22:14",
-      trending: true,
-    },
-  ];
+  // TODO: Replace with actual favorites API when implemented
+  // For now, fetch recent videos as placeholder
+  const { data: videosResponse, isLoading, error } = useVideoList({
+    limit: 12,
+    orderBy: 'createdAt',
+    order: 'desc'
+  });
+
+  const favoriteVideos = videosResponse?.data || [];
 
   return (
     <div className="px-6 pt-6">
@@ -45,7 +30,18 @@ export default function FavoritesPage() {
         </div>
       </div>
 
-      {favoriteVideos.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array(8).fill(0).map((_, index) => (
+            <VideoCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="text-center py-16">
+          <div className="text-red-400 mb-4">Failed to load favorites</div>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      ) : favoriteVideos.length > 0 ? (
         <>
           <div className="flex justify-between mb-4">
             <span className="text-sm text-gray-400">{favoriteVideos.length} videos</span>

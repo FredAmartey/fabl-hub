@@ -16,6 +16,26 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'api.dicebear.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.clerk.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.clerk.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'stream.mux.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'image.mux.com',
+      },
     ],
   },
   // Disable ESLint during build to avoid build failures from linting errors

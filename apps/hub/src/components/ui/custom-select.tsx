@@ -37,7 +37,6 @@ export function CustomSelect({
   const [selectedValue, setSelectedValue] = useState(defaultValue || '')
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
   const [positionCalculated, setPositionCalculated] = useState(false)
-  const [openDirection, setOpenDirection] = useState<'up' | 'down'>('down')
   const containerRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const finalValue = value !== undefined ? value : selectedValue
@@ -70,7 +69,7 @@ export function CustomSelect({
       // Position above if there's not enough space below but enough above
       const shouldPositionAbove = spaceBelow < maxDropdownHeight && spaceAbove >= maxDropdownHeight
       
-      setOpenDirection(shouldPositionAbove ? 'up' : 'down')
+      // Direction calculation can be added here if needed
       
       // For upward positioning, calculate from bottom edge
       const topPosition = shouldPositionAbove 
@@ -155,7 +154,7 @@ export function CustomSelect({
               }}
             >
               <div className="max-h-64 overflow-y-auto">
-                {options.map((option, index) => (
+                {options.map((option) => (
                   <button
                     key={option.value}
                     type="button"

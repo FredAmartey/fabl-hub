@@ -1,5 +1,5 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@fabl/db'
 
 export function errorHandler(
   error: FastifyError,

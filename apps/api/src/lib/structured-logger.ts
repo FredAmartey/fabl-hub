@@ -9,10 +9,11 @@ declare module 'fastify' {
 }
 
 interface LogContext {
-  correlationId: string
+  correlationId?: string
   userId?: string
   method?: string
   url?: string
+  error?: any
   [key: string]: any
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 interface ChannelTabsProps {
   currentTab: string;
@@ -15,7 +14,6 @@ const tabs = [
 ];
 
 export function ChannelTabs({ currentTab, username }: ChannelTabsProps) {
-  const pathname = usePathname();
 
   return (
     <div className="border-b border-gray-800">

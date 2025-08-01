@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { Button } from "./Button";
 import { SearchBox } from "./SearchBox";
-import { useUser } from "@/hooks/api/use-user";
 import { useNotifications, useMarkNotificationRead } from "@/hooks/api/use-notifications";
 import { formatDate } from "@fabl/utils";
 import { useUser as useClerkUser, SignInButton, useClerk } from "@clerk/nextjs";

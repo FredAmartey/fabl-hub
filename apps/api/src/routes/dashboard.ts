@@ -56,6 +56,10 @@ const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
       const thirtyDaysAgo = new Date()
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - COMPARISON_PERIOD_DAYS)
 
+      // Get current date for analytics
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
       // Single optimized query to get all user stats
       const userStats = await fastify.db.user.findUnique({
         where: { id: userId },
@@ -73,6 +77,27 @@ const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
           subscribers: {
             where: { createdAt: { gte: thirtyDaysAgo } },
             select: { id: true }
+          },
+          analytics: {
+            where: { date: { gte: thirtyDaysAgo } },
+            select: {
+              date: true,
+              views: true,
+              watchTimeMinutes: true,
+              subscribersGained: true,
+              subscribersLost: true,
+              estimatedRevenue: true
+            }
+          },
+          transactions: {
+            where: { 
+              createdAt: { gte: thirtyDaysAgo },
+              status: 'PAID'
+            },
+            select: {
+              amount: true,
+              type: true
+            }
           }
         }
       })
@@ -81,34 +106,58 @@ const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'User not found' })
       }
 
-      // Calculate aggregated stats from the single query result
-      const currentViews = userStats.videos.reduce((sum, video) => sum + video.views, 0)
-      const totalComments = userStats.videos.reduce((sum, video) => sum + video._count.comments, 0)
-      const videoCount = userStats.videos.length
+      // Calculate aggregated stats from analytics data
+      const currentPeriodViews = userStats.analytics.reduce((sum, day) => sum + day.views, 0)
+      const currentPeriodWatchTime = userStats.analytics.reduce((sum, day) => sum + day.watchTimeMinutes, 0)
+      const subscribersGained = userStats.analytics.reduce((sum, day) => sum + day.subscribersGained, 0)
+      const subscribersLost = userStats.analytics.reduce((sum, day) => sum + day.subscribersLost, 0)
       
-      // Calculate views from older videos (created before 30 days ago)
-      const prevViews = userStats.videos
-        .filter(video => video.createdAt < thirtyDaysAgo)
-        .reduce((sum, video) => sum + video.views, 0)
-
-      // Calculate stats for current period
-      const currentSubs = userStats.subscriberCount
-      const recentSubsCount = userStats.subscribers.length
-      const prevSubs = currentSubs - recentSubsCount
-
+      // Calculate revenue from transactions
+      const revenueByType = userStats.transactions.reduce((acc, transaction) => {
+        acc[transaction.type] = (acc[transaction.type] || 0) + transaction.amount
+        acc.total += transaction.amount
+        return acc
+      }, { total: 0, AD_REVENUE: 0, SUBSCRIPTION: 0, TIP: 0, MERCHANDISE: 0, PREMIUM_CONTENT: 0 })
+      
+      // Get previous period data for comparison
+      const sixtyDaysAgo = new Date()
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - COMPARISON_PERIOD_DAYS * 2)
+      
+      const previousPeriodAnalytics = await fastify.db.analyticsSnapshot.findMany({
+        where: {
+          creatorId: userId,
+          date: {
+            gte: sixtyDaysAgo,
+            lt: thirtyDaysAgo
+          }
+        },
+        select: {
+          views: true,
+          watchTimeMinutes: true,
+          subscribersGained: true,
+          subscribersLost: true,
+          estimatedRevenue: true
+        }
+      })
+      
+      const prevPeriodViews = previousPeriodAnalytics.reduce((sum, day) => sum + day.views, 0)
+      const prevPeriodWatchTime = previousPeriodAnalytics.reduce((sum, day) => sum + day.watchTimeMinutes, 0)
+      const prevPeriodRevenue = previousPeriodAnalytics.reduce((sum, day) => sum + day.estimatedRevenue, 0)
+      
       // Calculate percentage changes with safe division
       const calculateChange = (current: number, previous: number): number => {
         if (previous === 0) return current > 0 ? 100 : 0
         return Math.round(((current - previous) / previous) * 100 * 100) / 100
       }
-
-      const viewsChange = calculateChange(currentViews, prevViews)
-      const subsChange = calculateChange(currentSubs, prevSubs)
       
-      // Calculate watch time based on views
-      const estimatedWatchTimeHours = Math.round((currentViews * AVERAGE_WATCH_TIME_MINUTES) / 60)
-      const prevWatchTimeHours = Math.round((prevViews * AVERAGE_WATCH_TIME_MINUTES) / 60)
-      const watchTimeChange = calculateChange(estimatedWatchTimeHours, prevWatchTimeHours)
+      const currentSubs = userStats.subscriberCount
+      const netSubsChange = subscribersGained - subscribersLost
+      const prevSubs = currentSubs - netSubsChange
+      
+      const viewsChange = calculateChange(currentPeriodViews, prevPeriodViews)
+      const subsChange = calculateChange(currentSubs, prevSubs)
+      const watchTimeChange = calculateChange(currentPeriodWatchTime, prevPeriodWatchTime)
+      const revenueChange = calculateChange(revenueByType.total, prevPeriodRevenue)
 
       const statsResponse = {
         subscribers: {
@@ -117,22 +166,22 @@ const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
           period: `${COMPARISON_PERIOD_DAYS} days`
         },
         views: {
-          total: currentViews,
+          total: currentPeriodViews,
           change: viewsChange,
           period: `${COMPARISON_PERIOD_DAYS} days`
         },
         watchTime: {
-          hours: estimatedWatchTimeHours,
+          hours: Math.round(currentPeriodWatchTime / 60),
           change: watchTimeChange,
           period: `${COMPARISON_PERIOD_DAYS} days`
         },
         revenue: {
-          total: 0, // TODO: Implement revenue tracking
-          change: 0,
+          total: revenueByType.total,
+          change: revenueChange,
           breakdown: {
-            ads: 0,
-            memberships: 0,
-            other: 0
+            ads: revenueByType.AD_REVENUE,
+            memberships: revenueByType.SUBSCRIPTION,
+            other: revenueByType.TIP + revenueByType.MERCHANDISE + revenueByType.PREMIUM_CONTENT
           }
         }
       }

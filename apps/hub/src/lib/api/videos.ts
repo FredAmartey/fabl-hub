@@ -1,4 +1,4 @@
-import { Video, VideoStatus } from '@fabl/types';
+import { Video } from '@fabl/types';
 import { APIClient } from '@fabl/utils';
 
 // Create apiClient instance

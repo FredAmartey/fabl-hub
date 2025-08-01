@@ -49,7 +49,9 @@
       "Bash(git push:*)",
       "Bash(npm start)",
       "Bash(PORT=3000 npm run dev)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(timeout 30s npm run dev)",
+      "Bash(PORT=3003 timeout 15s npm run dev)"
     ],
     "deny": []
   }

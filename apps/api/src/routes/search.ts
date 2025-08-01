@@ -7,7 +7,7 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize progress tracker with Redis if available
   const progressTracker = fastify.cache?.getRedis() 
     ? new IndexProgressTracker(fastify.cache.getRedis())
-    : null
+    : undefined
     
   const searchService = new SearchIndexingService(fastify.db, progressTracker)
 

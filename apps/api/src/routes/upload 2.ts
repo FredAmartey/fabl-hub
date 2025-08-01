@@ -244,6 +244,7 @@ const uploadRoutes: FastifyPluginAsync = async (fastify) => {
           status: 'PROCESSING',
           videoUrl: '', // Will be updated when asset is ready
           monetizationEnabled: false,
+          tags: tags || [],
         }
       })
 

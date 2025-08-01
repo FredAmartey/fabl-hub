@@ -20,7 +20,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
   }, async (request, reply) => {
-    const { type, data } = request.body
+    const { type, data } = request.body as any
 
     try {
       switch (type) {

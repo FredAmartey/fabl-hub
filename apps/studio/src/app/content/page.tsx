@@ -30,92 +30,33 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import { useUpload } from "../../contexts/UploadContext";
-
-// Generate more realistic video data
-const generateMockVideos = () => {
-  const titles = [
-    "Building a Modern Web App with Next.js 14",
-    "React Server Components Explained",
-    "TypeScript Best Practices 2024",
-    "AI Integration Tutorial - Part 1",
-    "Live Coding: Building a SaaS Dashboard",
-    "Understanding React Hooks Deep Dive",
-    "GraphQL vs REST API: Complete Comparison",
-    "Microservices Architecture Pattern",
-    "Docker and Kubernetes for Beginners",
-    "Advanced CSS Grid Techniques",
-    "Vue.js 3 Composition API Tutorial",
-    "Building Real-time Apps with WebSockets",
-    "Node.js Performance Optimization",
-    "MongoDB Schema Design Patterns",
-    "AWS Lambda Functions Guide",
-    "Testing React Applications",
-    "CI/CD Pipeline with GitHub Actions",
-    "Flutter Mobile App Development",
-    "Rust Programming Language Basics",
-    "Web Security Best Practices",
-    "Machine Learning with TensorFlow.js",
-    "Blockchain Development Tutorial",
-    "Progressive Web Apps (PWA) Guide",
-    "Svelte vs React Performance",
-    "Redis Caching Strategies",
-    "PostgreSQL Advanced Queries",
-    "Deno vs Node.js Comparison",
-    "Angular Universal SSR",
-    "Web Assembly Introduction",
-    "Python FastAPI Tutorial",
-    "React Native Navigation",
-    "Tailwind CSS Advanced Tips",
-    "JAMstack Architecture",
-    "Serverless Functions Deep Dive",
-    "Git Advanced Workflows",
-    "OAuth 2.0 Implementation",
-    "WebRTC Video Calling App",
-    "Elasticsearch Full Text Search",
-    "Kafka Event Streaming",
-    "gRPC Microservices Communication"
-  ];
-
-  const statuses = ["public", "public", "public", "unlisted", "private", "scheduled", "draft"];
-  
-  return titles.map((title, index) => {
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const isPublished = status === "public" || status === "unlisted";
-    const views = isPublished ? Math.floor(Math.random() * 500000) : 0;
-    const likes = isPublished ? Math.floor(views * (Math.random() * 0.1)) : 0;
-    const dislikes = isPublished ? Math.floor(likes * (Math.random() * 0.05)) : 0;
-    const comments = isPublished ? Math.floor(likes * (Math.random() * 0.3)) : 0;
-    
-    return {
-      id: index + 1,
-      title,
-      duration: `${Math.floor(Math.random() * 20)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
-      status,
-      views: views.toLocaleString(),
-      comments: comments.toString(),
-      likes,
-      dislikes,
-      monetization: isPublished && Math.random() > 0.3,
-      date: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      thumbnail: "/api/placeholder/120/68"
-    };
-  });
-};
-
-const mockVideos = generateMockVideos();
+import { useStudioVideos, useUpdateVideo, useDeleteVideo, useBulkVideoOperation } from "@/hooks/use-studio-api";
 
 export default function ContentPage() {
   const { openUploadModal } = useUpload();
-  const [selectedVideos, setSelectedVideos] = useState<number[]>([]);
+  const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("list");
   const [showFilters, setShowFilters] = useState(false);
   const [visibilityFilter, setVisibilityFilter] = useState("all");
-  const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{[key: number]: 'down' | 'up'}>({});
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{[key: string]: 'down' | 'up'}>({});
   const [currentPage, setCurrentPage] = useState(1);
   const videosPerPage = 10;
   const filtersRef = useRef<HTMLDivElement>(null);
+
+  // API hooks
+  const { data: videosData, isLoading, error } = useStudioVideos({
+    page: currentPage,
+    limit: videosPerPage,
+    status: visibilityFilter === 'all' ? undefined : visibilityFilter.toUpperCase(),
+    search: searchQuery || undefined,
+    orderBy: 'createdAt',
+    order: 'desc'
+  });
+  const updateVideoMutation = useUpdateVideo();
+  const deleteVideoMutation = useDeleteVideo();
+  const bulkOperationMutation = useBulkVideoOperation();
 
   // Close filters and dropdowns when clicking outside
   useEffect(() => {
@@ -136,14 +77,15 @@ export default function ContentPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [activeDropdown]);
 
-  const toggleVideoSelection = (id: number) => {
+  const toggleVideoSelection = (id: string) => {
     setSelectedVideos(prev => 
       prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
     );
   };
 
   const toggleSelectAll = () => {
-    const currentPageVideoIds = paginatedVideos.map(video => video.id);
+    if (!videosData?.videos) return;
+    const currentPageVideoIds = videosData.videos.map(video => video.id);
     const allSelected = currentPageVideoIds.every(id => selectedVideos.includes(id));
     
     if (allSelected) {
@@ -153,17 +95,10 @@ export default function ContentPage() {
     }
   };
 
-  const filteredVideos = mockVideos.filter(video => {
-    const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesVisibility = visibilityFilter === "all" || video.status === visibilityFilter;
-    return matchesSearch && matchesVisibility;
-  });
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredVideos.length / videosPerPage);
-  const startIndex = (currentPage - 1) * videosPerPage;
-  const endIndex = startIndex + videosPerPage;
-  const paginatedVideos = filteredVideos.slice(startIndex, endIndex);
+  // Get video data from API
+  const videos = videosData?.videos || [];
+  const totalPages = videosData?.pagination?.totalPages || 1;
+  const totalVideos = videosData?.pagination?.total || 0;
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -175,7 +110,7 @@ export default function ContentPage() {
     setActiveDropdown(null);
   }, [currentPage]);
 
-  const handleVideoClick = (videoId: number) => {
+  const handleVideoClick = (videoId: string) => {
     console.log('Video clicked:', videoId);
     // TODO: Navigate to video edit page or show video details
   };
@@ -184,7 +119,7 @@ export default function ContentPage() {
     openUploadModal();
   };
 
-  const handleDropdownToggle = (videoId: number, event: React.MouseEvent) => {
+  const handleDropdownToggle = (videoId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     
     if (activeDropdown === videoId) {
@@ -210,7 +145,7 @@ export default function ContentPage() {
     setActiveDropdown(videoId);
   };
 
-  const handleVideoAction = (videoId: number, action: string) => {
+  const handleVideoAction = async (videoId: string, action: string) => {
     setActiveDropdown(null);
     console.log(`${action} for video ${videoId}`);
     
@@ -243,14 +178,21 @@ export default function ContentPage() {
       case 'delete':
         // Delete video with confirmation
         if (confirm('Are you sure you want to delete this video?')) {
-          alert(`Delete video ${videoId}`);
+          try {
+            await deleteVideoMutation.mutateAsync(videoId);
+            alert('Video deleted successfully!');
+          } catch (error) {
+            alert('Failed to delete video. Please try again.');
+          }
         }
         break;
     }
   };
 
   const getStatusDisplay = (status: string) => {
-    switch (status) {
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
+      case "published":
       case "public":
         return { label: "PUBLIC", color: "bg-green-500/20 text-green-300", icon: CheckCircleIcon };
       case "unlisted":
@@ -261,6 +203,8 @@ export default function ContentPage() {
         return { label: "SCHEDULED", color: "bg-blue-500/20 text-blue-300", icon: CalendarIcon };
       case "draft":
         return { label: "DRAFT", color: "bg-purple-500/20 text-purple-300", icon: ClockIcon };
+      case "processing":
+        return { label: "PROCESSING", color: "bg-yellow-500/20 text-yellow-300", icon: ClockIcon };
       default:
         return { label: status.toUpperCase(), color: "bg-gray-500/20 text-gray-300", icon: XMarkIcon };
     }
@@ -345,11 +289,10 @@ export default function ContentPage() {
                       className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm"
                     >
                       <option value="all">All Videos</option>
-                      <option value="public">Public</option>
-                      <option value="unlisted">Unlisted</option>
-                      <option value="private">Private</option>
+                      <option value="published">Published</option>
                       <option value="draft">Draft</option>
-                      <option value="scheduled">Scheduled</option>
+                      <option value="processing">Processing</option>
+                      <option value="private">Private</option>
                     </select>
                   </div>
                   <button 
@@ -387,9 +330,27 @@ export default function ContentPage() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="backdrop-blur-xl rounded-2xl border border-white/40 shadow-2xl overflow-hidden p-8 text-center" style={{backgroundColor: 'rgba(255, 255, 255, 0.2)'}}>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your videos...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="backdrop-blur-xl rounded-2xl border border-white/40 shadow-2xl overflow-hidden p-8 text-center" style={{backgroundColor: 'rgba(255, 255, 255, 0.2)'}}>
+            <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <p className="text-red-600 mb-2">Failed to load videos</p>
+            <p className="text-gray-600 text-sm">Please try refreshing the page</p>
+          </div>
+        )}
+
         {/* Main Content */}
-        <div className="backdrop-blur-xl rounded-2xl border border-white/40 shadow-2xl overflow-hidden" style={{backgroundColor: 'rgba(255, 255, 255, 0.2)', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)'}}>
-          {viewMode === "list" ? (
+        {!isLoading && !error && (
+          <div className="backdrop-blur-xl rounded-2xl border border-white/40 shadow-2xl overflow-hidden" style={{backgroundColor: 'rgba(255, 255, 255, 0.2)', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)'}}>
+            {viewMode === "list" ? (
             /* List View */
             <div>
               {/* Table Header */}
@@ -399,20 +360,20 @@ export default function ContentPage() {
                     <div className="relative">
                       <input
                         type="checkbox"
-                        checked={paginatedVideos.length > 0 && paginatedVideos.every(video => selectedVideos.includes(video.id))}
+                        checked={videos.length > 0 && videos.every(video => selectedVideos.includes(video.id))}
                         onChange={toggleSelectAll}
                         className="sr-only"
                       />
                       <div 
                         onClick={toggleSelectAll}
                         className={`w-5 h-5 rounded-md border-2 cursor-pointer transition-all flex items-center justify-center ${
-                          paginatedVideos.length > 0 && paginatedVideos.every(video => selectedVideos.includes(video.id))
+                          videos.length > 0 && videos.every(video => selectedVideos.includes(video.id))
                             ? 'border-purple-500 bg-gradient-to-r from-purple-500 to-pink-500'
                             : 'border-gray-400 bg-white/20 backdrop-blur-sm hover:border-purple-400'
                         }`}
                       >
                         <svg className={`w-3 h-3 text-white transition-opacity ${
-                          paginatedVideos.length > 0 && paginatedVideos.every(video => selectedVideos.includes(video.id)) ? 'opacity-100' : 'opacity-0'
+                          videos.length > 0 && videos.every(video => selectedVideos.includes(video.id)) ? 'opacity-100' : 'opacity-0'
                         }`} fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -430,7 +391,21 @@ export default function ContentPage() {
 
               {/* Video Rows */}
               <div className="divide-y divide-white/10">
-                {paginatedVideos.map((video) => {
+                {videos.length === 0 ? (
+                  <div className="px-6 py-12 text-center">
+                    <FilmIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No videos found</h3>
+                    <p className="text-gray-600 mb-4">Get started by uploading your first video.</p>
+                    <button 
+                      onClick={openUploadModal}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all font-medium"
+                    >
+                      <CloudArrowUpIcon className="w-4 h-4" />
+                      Upload Video
+                    </button>
+                  </div>
+                ) : (
+                  videos.map((video) => {
                   const statusDisplay = getStatusDisplay(video.status);
                   const StatusIcon = statusDisplay.icon;
                   
@@ -473,16 +448,18 @@ export default function ContentPage() {
                         {/* Video Info */}
                         <div className="col-span-5 -ml-4 flex items-center gap-3">
                           <div className="relative w-32 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center overflow-hidden border border-white/30 shadow-sm">
-                            <FilmIcon className="w-10 h-10 text-gray-600" />
-                            <div className="absolute bottom-1 right-1 bg-black/90 text-white text-xs px-1.5 py-0.5 rounded font-medium">
-                              {video.duration}
-                            </div>
-                            {/* Monetization indicator on thumbnail */}
-                            {video.monetization && (
-                              <div className="absolute top-1 left-1 bg-green-500/90 p-1 rounded-full" title="Monetized">
-                                <CurrencyDollarIcon className="w-3 h-3 text-white" />
-                              </div>
+                            {video.thumbnailUrl ? (
+                              <img 
+                                src={video.thumbnailUrl} 
+                                alt={video.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <FilmIcon className="w-10 h-10 text-gray-600" />
                             )}
+                            <div className="absolute bottom-1 right-1 bg-black/90 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                              {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
+                            </div>
                           </div>
                           <div className="flex-1">
                             <h3 
@@ -625,69 +602,60 @@ export default function ContentPage() {
                         {/* Status */}
                         <div className="col-span-1">
                           <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            video.status === 'public' ? 'bg-green-100 text-green-800' :
-                            video.status === 'unlisted' ? 'bg-orange-100 text-orange-800' :
-                            video.status === 'private' ? 'bg-gray-100 text-gray-800' :
-                            video.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                            video.status === 'draft' ? 'bg-purple-100 text-purple-800' :
-                            'bg-yellow-100 text-yellow-800'
+                            video.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' :
+                            video.status === 'DRAFT' ? 'bg-purple-100 text-purple-800' :
+                            video.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
                           }`}>
                             <StatusIcon className="w-3 h-3" />
-                            {video.status === 'public' ? 'Public' :
-                             video.status === 'unlisted' ? 'Unlisted' :
-                             video.status === 'private' ? 'Private' :
-                             video.status === 'scheduled' ? 'Scheduled' :
-                             video.status === 'draft' ? 'Draft' : 'Processing'}
+                            {video.status === 'PUBLISHED' ? 'Published' :
+                             video.status === 'DRAFT' ? 'Draft' :
+                             video.status === 'PROCESSING' ? 'Processing' : video.status}
                           </div>
                         </div>
 
                         {/* Views */}
                         <div className="col-span-1">
-                          <span className="text-sm text-gray-900">{video.views}</span>
+                          <span className="text-sm text-gray-900">{video.views.toLocaleString()}</span>
                         </div>
 
                         {/* Comments */}
                         <div className="col-span-1">
-                          <span className="text-sm text-gray-900">{video.comments}</span>
+                          <span className="text-sm text-gray-900">-</span>
                         </div>
 
                         {/* Likes */}
                         <div className="col-span-2">
-                          {(() => {
-                            const total = video.likes + video.dislikes;
-                            const percentage = total > 0 ? ((video.likes / total) * 100).toFixed(1) : "0.0";
-                            const likePercentage = total > 0 ? (video.likes / total) * 100 : 0;
-                            
-                            return (
-                              <div className="space-y-1">
-                                <div className="text-sm font-medium text-gray-900">{percentage}%</div>
-                                <div className="text-xs text-gray-600">{video.likes.toLocaleString()} likes</div>
-                                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                  <div 
-                                    className="bg-green-500 h-1.5 rounded-full transition-all duration-300" 
-                                    style={{ width: `${likePercentage}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            );
-                          })()}
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium text-gray-900">-</div>
+                            <div className="text-xs text-gray-600">{video.likes || 0} likes</div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div 
+                                className="bg-green-500 h-1.5 rounded-full transition-all duration-300" 
+                                style={{ width: '0%' }}
+                              ></div>
+                            </div>
+                          </div>
                         </div>
 
                         {/* Date */}
                         <div className="col-span-1">
-                          <span className="text-sm text-gray-600">{video.date}</span>
+                          <span className="text-sm text-gray-600">
+                            {new Date(video.createdAt).toLocaleDateString()}
+                          </span>
                         </div>
                       </div>
                     </div>
                   );
-                })}
+                  })
+                )}
               </div>
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="px-6 py-4 border-t border-white/30 backdrop-blur-xl flex items-center justify-between" style={{backgroundColor: 'rgba(255, 255, 255, 0.25)', backdropFilter: 'blur(20px)'}}>
                   <div className="text-sm text-gray-600">
-                    Showing {startIndex + 1} to {Math.min(endIndex, filteredVideos.length)} of {filteredVideos.length} videos
+                    Showing {((currentPage - 1) * videosPerPage) + 1} to {Math.min(currentPage * videosPerPage, totalVideos)} of {totalVideos} videos
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -755,21 +723,43 @@ export default function ContentPage() {
           ) : (
             /* Grid View */
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {paginatedVideos.map((video) => {
+              {videos.length === 0 ? (
+                <div className="text-center py-12">
+                  <FilmIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No videos found</h3>
+                  <p className="text-gray-600 mb-4">Get started by uploading your first video.</p>
+                  <button 
+                    onClick={openUploadModal}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all font-medium"
+                  >
+                    <CloudArrowUpIcon className="w-4 h-4" />
+                    Upload Video
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {videos.map((video) => {
                   const statusDisplay = getStatusDisplay(video.status);
                   return (
                     <div key={video.id} className="group relative">
                       <div className="bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-white/50">
                         {/* Video Thumbnail */}
                         <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <FilmIcon className="w-16 h-16 text-gray-400" />
-                          </div>
+                          {video.thumbnailUrl ? (
+                            <img 
+                              src={video.thumbnailUrl} 
+                              alt={video.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <FilmIcon className="w-16 h-16 text-gray-400" />
+                            </div>
+                          )}
                           
                           {/* Duration */}
                           <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded font-medium">
-                            {video.duration}
+                            {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
                           </div>
                           
                           {/* Hover Overlay with Actions */}
@@ -863,52 +853,45 @@ export default function ContentPage() {
                             </div>
                           </div>
                           
-                          {/* Status and Monetization */}
+                          {/* Status */}
                           <div className="flex items-center gap-3 mb-3 text-xs text-gray-500">
                             <div className="flex items-center gap-1">
                               <statusDisplay.icon className="w-3 h-3" />
-                              <span>{video.status.charAt(0).toUpperCase() + video.status.slice(1)}</span>
+                              <span>{video.status.charAt(0).toUpperCase() + video.status.slice(1).toLowerCase()}</span>
                             </div>
-                            {video.monetization && (
-                              <div className="flex items-center gap-1">
-                                <CurrencyDollarIcon className="w-3 h-3 text-green-600" />
-                              </div>
-                            )}
                           </div>
                           
                           {/* Stats Grid */}
                           <div className="grid grid-cols-2 gap-3 text-xs">
                             <div>
                               <div className="text-gray-500 mb-1">Views</div>
-                              <div className="font-medium text-gray-900">{video.views}</div>
+                              <div className="font-medium text-gray-900">{video.views.toLocaleString()}</div>
                             </div>
                             <div>
                               <div className="text-gray-500 mb-1">Comments</div>
-                              <div className="font-medium text-gray-900">{video.comments}</div>
+                              <div className="font-medium text-gray-900">-</div>
                             </div>
                             <div>
                               <div className="text-gray-500 mb-1">Likes</div>
-                              <div className="font-medium text-gray-900">{video.likes.toLocaleString()}</div>
+                              <div className="font-medium text-gray-900">{(video.likes || 0).toLocaleString()}</div>
                             </div>
                             <div>
                               <div className="text-gray-500 mb-1">Date</div>
-                              <div className="font-medium text-gray-900">{video.date}</div>
+                              <div className="font-medium text-gray-900">{new Date(video.createdAt).toLocaleDateString()}</div>
                             </div>
                           </div>
                           
                           {/* Like Percentage Bar */}
-                          {video.likes + video.dislikes > 0 && (
+                          {(video.likes || 0) > 0 && (
                             <div className="mt-3">
                               <div className="flex items-center justify-between text-xs mb-1">
                                 <span className="text-gray-600">Audience rating</span>
-                                <span className="font-medium text-gray-900">
-                                  {((video.likes / (video.likes + video.dislikes)) * 100).toFixed(0)}%
-                                </span>
+                                <span className="font-medium text-gray-900">100%</span>
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-1.5">
                                 <div 
                                   className="bg-gradient-to-r from-green-500 to-green-400 h-1.5 rounded-full transition-all duration-300" 
-                                  style={{ width: `${(video.likes / (video.likes + video.dislikes)) * 100}%` }}
+                                  style={{ width: '100%' }}
                                 />
                               </div>
                             </div>
@@ -917,14 +900,15 @@ export default function ContentPage() {
                       </div>
                     </div>
                   );
-                })}
-              </div>
+                  })}
+                </div>
+              )}
               
               {/* Pagination Controls for Grid View */}
               {totalPages > 1 && (
                 <div className="mt-6 flex items-center justify-between">
                   <div className="text-sm text-gray-600">
-                    Showing {startIndex + 1} to {Math.min(endIndex, filteredVideos.length)} of {filteredVideos.length} videos
+                    Showing {((currentPage - 1) * videosPerPage) + 1} to {Math.min(currentPage * videosPerPage, totalVideos)} of {totalVideos} videos
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -990,7 +974,8 @@ export default function ContentPage() {
               )}
             </div>
           )}
-        </div>
+          </div>
+        )}
 
         {/* Add CSS for animations */}
         <style jsx>{`

@@ -1,4 +1,5 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyRequest } from 'fastify'
+import createError from '@fastify/error'
 import { clerkPlugin, getAuth } from '@clerk/fastify'
 import fp from 'fastify-plugin'
 
@@ -12,13 +13,17 @@ declare module 'fastify' {
       orgSlug: string | null
     }
   }
+  
+  interface FastifyInstance {
+    requireAuth: (request: FastifyRequest) => string
+  }
 }
 
 const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
   // Register Clerk plugin
   await fastify.register(clerkPlugin, {
-    secretKey: fastify.config.CLERK_SECRET_KEY,
-    publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+    secretKey: process.env.CLERK_SECRET_KEY || '',
+    publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''
   })
 
   // Add userAuth decorator to request
@@ -28,11 +33,11 @@ const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
   fastify.addHook('preHandler', async (request) => {
     const auth = getAuth(request)
     request.userAuth = {
-      userId: auth.userId,
-      sessionId: auth.sessionId,
-      orgId: auth.orgId,
-      orgRole: auth.orgRole,
-      orgSlug: auth.orgSlug
+      userId: auth.userId || null,
+      sessionId: auth.sessionId || null,
+      orgId: auth.orgId || null,
+      orgRole: auth.orgRole || null,
+      orgSlug: auth.orgSlug || null
     }
     
     // Add userId to request for logging
@@ -42,9 +47,10 @@ const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
   })
 
   // Helper to require authentication
-  fastify.decorate('requireAuth', (request: any) => {
+  fastify.decorate('requireAuth', (request: FastifyRequest) => {
     if (!request.userAuth.userId) {
-      throw fastify.httpErrors.unauthorized('Authentication required')
+      const UnauthorizedError = createError('UNAUTHORIZED', 'Authentication required', 401)
+      throw new UnauthorizedError()
     }
     return request.userAuth.userId
   })

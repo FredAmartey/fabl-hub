@@ -1,35 +1,17 @@
+"use client";
+
 import React from "react";
 import { Button } from "../../components/Button";
 import { VideoCard } from "../../components/VideoCard";
+import { VideoCardSkeleton } from "../../components/VideoCardSkeleton";
 import { ClockIcon } from "lucide-react";
+import { useVideoList } from "@/hooks/use-videos";
 
 export default function WatchLaterPage() {
-  const watchLaterVideos = [
-    {
-      id: 4,
-      title: "Visual Wonder: Ocean Depths Reimagined",
-      channel: "DeepDream Studio",
-      views: "647K",
-      timestamp: "4 days ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1551244072-5d12893278ab?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "12:05",
-    },
-    {
-      id: 7,
-      title: "AI Cinematics: The Silent Observer",
-      channel: "Neural Films",
-      views: "1.8M",
-      timestamp: "3 weeks ago",
-      thumbnail:
-        "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=800&auto=format&fit=crop",
-      avatar:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&auto=format&fit=crop&crop=faces",
-      duration: "25:08",
-    },
-  ];
+  // TODO: Replace with actual watch-later API when implemented
+  // For now, return empty array as watch-later is user-specific
+  const { isLoading } = useVideoList({ limit: 1 }); // Minimal call just for loading state
+  const watchLaterVideos: any[] = [];
 
   return (
     <div className="px-6 pt-6">
@@ -43,7 +25,13 @@ export default function WatchLaterPage() {
         </div>
       </div>
 
-      {watchLaterVideos.length > 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array(4).fill(0).map((_, index) => (
+            <VideoCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : watchLaterVideos.length > 0 ? (
         <>
           <div className="flex justify-between mb-4">
             <span className="text-sm text-gray-400">{watchLaterVideos.length} videos</span>
