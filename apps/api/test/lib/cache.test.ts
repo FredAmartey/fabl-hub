@@ -1,10 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Redis from 'ioredis'
 import { CacheService, CacheKeyBuilder, CACHE_CONFIG } from '../../src/lib/cache'
 
 // Mock Redis
-vi.mock('ioredis')
-const MockedRedis = vi.mocked(Redis)
+jest.mock('ioredis')
+const MockedRedis = Redis as jest.MockedClass<typeof Redis>
 
 describe('CacheService', () => {
   let cacheService: CacheService
@@ -12,22 +11,22 @@ describe('CacheService', () => {
 
   beforeEach(() => {
     mockRedis = {
-      connect: vi.fn().mockResolvedValue(undefined),
-      disconnect: vi.fn().mockResolvedValue(undefined),
-      get: vi.fn(),
-      setex: vi.fn(),
-      del: vi.fn(),
-      keys: vi.fn(),
-      mget: vi.fn(),
-      pipeline: vi.fn(),
-      ping: vi.fn().mockResolvedValue('PONG'),
-      on: vi.fn()
+      connect: jest.fn().mockResolvedValue(undefined),
+      disconnect: jest.fn().mockResolvedValue(undefined),
+      get: jest.fn(),
+      setex: jest.fn(),
+      del: jest.fn(),
+      keys: jest.fn(),
+      mget: jest.fn(),
+      pipeline: jest.fn(),
+      ping: jest.fn().mockResolvedValue('PONG'),
+      on: jest.fn()
     }
     MockedRedis.mockImplementation(() => mockRedis)
   })
 
   afterEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   describe('constructor', () => {
@@ -61,7 +60,7 @@ describe('CacheService', () => {
 
     it('should handle connection failures gracefully', async () => {
       mockRedis.connect.mockRejectedValue(new Error('Connection failed'))
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
       
       await cacheService.connect()
       
@@ -110,7 +109,7 @@ describe('CacheService', () => {
 
     it('should handle JSON parse errors gracefully', async () => {
       mockRedis.get.mockResolvedValue('invalid-json')
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
       
       const result = await cacheService.get('test-key')
       
@@ -175,8 +174,8 @@ describe('CacheService', () => {
 
     it('should handle mset with multiple entries', async () => {
       const mockPipeline = {
-        setex: vi.fn().mockReturnThis(),
-        exec: vi.fn().mockResolvedValue([])
+        setex: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([])
       }
       mockRedis.pipeline.mockReturnValue(mockPipeline)
       

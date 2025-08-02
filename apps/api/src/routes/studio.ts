@@ -1,7 +1,14 @@
 import { FastifyPluginAsync } from 'fastify'
 import { Type } from '@sinclair/typebox'
+import Mux from '@mux/mux-node'
 
 const studioRoutes: FastifyPluginAsync = async (fastify) => {
+  // Initialize Mux client
+  const mux = new Mux({
+    tokenId: process.env.MUX_TOKEN_ID!,
+    tokenSecret: process.env.MUX_TOKEN_SECRET!,
+  })
+
   // Get creator's videos with filters
   fastify.get('/videos', {
     schema: {
@@ -253,6 +260,7 @@ const studioRoutes: FastifyPluginAsync = async (fastify) => {
     const updateData: any = { ...(updates as Record<string, any>) }
     if (updates.status === 'PUBLISHED' && video.status !== 'PUBLISHED') {
       updateData.publishedAt = new Date()
+      updateData.isApproved = true // Auto-approve manually published videos
     }
 
     const updatedVideo = await fastify.db.video.update({
@@ -296,7 +304,7 @@ const studioRoutes: FastifyPluginAsync = async (fastify) => {
 
     const video = await fastify.db.video.findUnique({
       where: { id },
-      select: { creatorId: true }
+      select: { creatorId: true, muxAssetId: true }
     })
 
     if (!video) {
@@ -307,7 +315,19 @@ const studioRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(403).send({ error: 'Not authorized' })
     }
 
+    // Delete from database first
     await fastify.db.video.delete({ where: { id } })
+
+    // Delete from Mux if asset exists
+    if (video.muxAssetId) {
+      try {
+        await mux.video.assets.delete(video.muxAssetId)
+        fastify.log.info(`Deleted Mux asset ${video.muxAssetId} for video ${id}`)
+      } catch (error: any) {
+        fastify.log.warn(`Failed to delete Mux asset ${video.muxAssetId}: ${error.message}`)
+        // Don't fail the entire operation if Mux deletion fails
+      }
+    }
 
     // Invalidate caches
     await Promise.all([
@@ -370,12 +390,12 @@ const studioRoutes: FastifyPluginAsync = async (fastify) => {
         const result = await fastify.db.video.updateMany({
           where: {
             id: { in: ownedVideoIds },
-            status: { not: 'PUBLISHED' },
-            isApproved: true
+            status: { not: 'PUBLISHED' }
           },
           data: {
             status: 'PUBLISHED',
-            publishedAt: new Date()
+            publishedAt: new Date(),
+            isApproved: true // Auto-approve manually published videos
           }
         })
         affected = result.count
@@ -389,9 +409,29 @@ const studioRoutes: FastifyPluginAsync = async (fastify) => {
         break
 
       case 'delete':
+        // Get Mux asset IDs before deleting videos
+        const videosToDelete = await fastify.db.video.findMany({
+          where: { id: { in: ownedVideoIds } },
+          select: { id: true, muxAssetId: true }
+        })
+        
+        // Delete from database
         affected = (await fastify.db.video.deleteMany({
           where: { id: { in: ownedVideoIds } }
         })).count
+        
+        // Delete associated Mux assets
+        for (const video of videosToDelete) {
+          if (video.muxAssetId) {
+            try {
+              await mux.video.assets.delete(video.muxAssetId)
+              fastify.log.info(`Deleted Mux asset ${video.muxAssetId} for video ${video.id}`)
+            } catch (error: any) {
+              fastify.log.warn(`Failed to delete Mux asset ${video.muxAssetId}: ${error.message}`)
+              // Continue with other deletions even if one fails
+            }
+          }
+        }
         break
 
       case 'monetize':

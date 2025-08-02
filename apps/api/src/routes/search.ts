@@ -1,17 +1,8 @@
 import { FastifyPluginAsync } from 'fastify'
 import { Type } from '@sinclair/typebox'
-import { SearchIndexingService } from '../services/search-indexing'
-import { IndexProgressTracker } from '../services/index-progress-tracker'
 
 const searchRoutes: FastifyPluginAsync = async (fastify) => {
-  // Initialize progress tracker with Redis if available
-  const progressTracker = fastify.cache?.getRedis() 
-    ? new IndexProgressTracker(fastify.cache.getRedis())
-    : undefined
-    
-  const searchService = new SearchIndexingService(fastify.db, progressTracker)
-
-  // Search videos with enhanced indexing
+  // Search videos - simplified version without search indexing service
   fastify.get('/', {
     schema: {
       querystring: Type.Object({
@@ -48,9 +39,9 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
-    const { 
-      q: query, 
-      limit = '20', 
+    const {
+      q: query,
+      limit = '20',
       offset = '0',
       category,
       sortBy = 'relevance'
@@ -63,31 +54,47 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      // Generate cache key based on search parameters
-      const cacheKey = `search:${query}:${limit}:${offset}:${category || 'all'}:${sortBy}`
-      
-      // Try to get cached results
-      const cachedResult = await fastify.cache.get<any>(cacheKey, { 
-        prefix: 'search',
-        ttl: 300 // Cache for 5 minutes
-      })
-      
-      if (cachedResult) {
-        return reply.send(cachedResult)
+      // Simple database search
+      const whereConditions: any = {
+        status: 'PUBLISHED',
+        OR: [
+          { title: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } }
+        ]
       }
       
-      // If not cached, perform search
-      const result = await searchService.searchVideos(query, {
-        limit: Math.min(parseInt(limit), 50),
-        offset: parseInt(offset),
-        category,
-        sortBy
-      })
+      if (category) {
+        whereConditions.category = category
+      }
+      
+      const orderBy: any = sortBy === 'views' ? { views: 'desc' } :
+                          sortBy === 'recent' ? { publishedAt: 'desc' } :
+                          { createdAt: 'desc' }
+      
+      const [videos, total] = await Promise.all([
+        fastify.db.video.findMany({
+          where: whereConditions,
+          include: {
+            creator: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+                avatarUrl: true
+              }
+            }
+          },
+          orderBy,
+          skip: parseInt(offset),
+          take: Math.min(parseInt(limit), 50)
+        }),
+        fastify.db.video.count({ where: whereConditions })
+      ])
 
       const response = {
         success: true,
         data: {
-          videos: result.videos.map((video: any) => ({
+          videos: videos.map((video: any) => ({
             id: video.id,
             title: video.title,
             description: video.description,
@@ -98,16 +105,10 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
             createdAt: video.createdAt.toISOString(),
             creator: video.creator
           })),
-          suggestions: result.suggestions,
-          totalResults: result.total
+          suggestions: [], // No suggestions in simplified mode
+          totalResults: total
         }
       }
-      
-      // Cache the response
-      await fastify.cache.set(cacheKey, response, { 
-        prefix: 'search',
-        ttl: 300 // Cache for 5 minutes
-      })
 
       reply.send(response)
     } catch (error) {
@@ -119,7 +120,7 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
     }
   })
 
-  // Get popular/trending searches
+  // Get popular/trending searches - simplified fallback version
   fastify.get('/popular', {
     schema: {
       response: {
@@ -131,10 +132,7 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     try {
-      // Get trending search terms from the search service
-      const trendingTerms = await searchService.getTrendingSearchTerms(10)
-      
-      // Fallback to default searches if no trending terms
+      // Fallback to default searches since we don't have trending data yet
       const fallbackSearches = [
         "AI music generation",
         "Neural art creation", 
@@ -148,11 +146,9 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
         "Natural language processing"
       ]
 
-      const popularSearches = trendingTerms.length > 0 ? trendingTerms : fallbackSearches
-
       reply.send({
         success: true,
-        data: popularSearches
+        data: fallbackSearches
       })
     } catch (error) {
       fastify.log.error(error)
@@ -161,167 +157,6 @@ const searchRoutes: FastifyPluginAsync = async (fastify) => {
         message: 'Failed to get popular searches'
       })
     }
-  })
-
-  // Search suggestions/autocomplete
-  fastify.get('/suggestions', {
-    schema: {
-      querystring: Type.Object({
-        q: Type.String({ minLength: 1 })
-      }),
-      response: {
-        200: Type.Object({
-          success: Type.Boolean(),
-          data: Type.Array(Type.String())
-        })
-      }
-    }
-  }, async (request, reply) => {
-    const { q: query } = request.query as { q: string }
-
-    try {
-      // Use the search service to get enhanced suggestions
-      const result = await searchService.searchVideos(query, { limit: 10 })
-      
-      // Extract suggestions from the result
-      const suggestions = result.suggestions.slice(0, 8)
-
-      reply.send({
-        success: true,
-        data: suggestions
-      })
-    } catch (error) {
-      fastify.log.error(error)
-      reply.status(500).send({
-        success: false,
-        message: 'Failed to get search suggestions'
-      })
-    }
-  })
-
-  // Admin endpoint to rebuild search index
-  fastify.post('/rebuild-index', {
-    preHandler: [
-      // Add admin auth check here if needed
-      // For now, we'll leave it open but log the action
-    ],
-    schema: {
-      response: {
-        200: Type.Object({
-          success: Type.Boolean(),
-          message: Type.String(),
-          data: Type.Object({
-            indexed: Type.Number(),
-            errors: Type.Number(),
-            totalProcessed: Type.Number(),
-            progressId: Type.String()
-          })
-        })
-      }
-    }
-  }, async (request, reply) => {
-    try {
-      fastify.log.info('Starting search index rebuild...')
-      
-      const result = await searchService.rebuildSearchIndex({
-        logger: fastify.log
-      })
-      
-      fastify.log.info(`Search index rebuild completed. Indexed: ${result.indexed}, Errors: ${result.errors}`)
-      
-      reply.send({
-        success: true,
-        message: 'Search index rebuild successfully',
-        data: result
-      })
-    } catch (error) {
-      fastify.log.error('Search index rebuild failed:', error)
-      reply.status(500).send({
-        success: false,
-        message: 'Failed to rebuild search index'
-      })
-    }
-  })
-
-  // Get search index rebuild progress
-  fastify.get('/rebuild-progress/:id', {
-    schema: {
-      params: Type.Object({
-        id: Type.String()
-      }),
-      response: {
-        200: Type.Object({
-          id: Type.String(),
-          status: Type.Union([
-            Type.Literal('pending'),
-            Type.Literal('running'),
-            Type.Literal('completed'),
-            Type.Literal('failed')
-          ]),
-          totalItems: Type.Number(),
-          processedItems: Type.Number(),
-          successfulItems: Type.Number(),
-          failedItems: Type.Number(),
-          startedAt: Type.Optional(Type.String()),
-          completedAt: Type.Optional(Type.String()),
-          error: Type.Optional(Type.String()),
-          lastUpdatedAt: Type.String()
-        })
-      }
-    }
-  }, async (request, reply) => {
-    const { id } = request.params as { id: string }
-    
-    if (!progressTracker) {
-      return reply.status(501).send({ 
-        error: 'Progress tracking not available (Redis not configured)' 
-      })
-    }
-    
-    const progress = await progressTracker.get(id)
-    
-    if (!progress) {
-      return reply.status(404).send({ error: 'Progress not found' })
-    }
-    
-    reply.send({
-      ...progress,
-      startedAt: progress.startedAt?.toISOString(),
-      completedAt: progress.completedAt?.toISOString(),
-      lastUpdatedAt: progress.lastUpdatedAt.toISOString()
-    })
-  })
-
-  // List all search index rebuild jobs
-  fastify.get('/rebuild-progress', {
-    schema: {
-      response: {
-        200: Type.Array(Type.Object({
-          id: Type.String(),
-          status: Type.String(),
-          totalItems: Type.Number(),
-          processedItems: Type.Number(),
-          successfulItems: Type.Number(),
-          failedItems: Type.Number(),
-          lastUpdatedAt: Type.String()
-        }))
-      }
-    }
-  }, async (request, reply) => {
-    if (!progressTracker) {
-      return reply.status(501).send({ 
-        error: 'Progress tracking not available (Redis not configured)' 
-      })
-    }
-    
-    const progressList = await progressTracker.list()
-    
-    reply.send(progressList.map(progress => ({
-      ...progress,
-      startedAt: progress.startedAt?.toISOString(),
-      completedAt: progress.completedAt?.toISOString(),
-      lastUpdatedAt: progress.lastUpdatedAt.toISOString()
-    })))
   })
 }
 

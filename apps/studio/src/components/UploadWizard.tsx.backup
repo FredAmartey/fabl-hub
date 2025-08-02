@@ -287,32 +287,20 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
               status: videoData.status,
               muxPlaybackId: videoData.muxPlaybackId,
               thumbnailUrl: videoData.thumbnailUrl,
-              isApproved: videoData.isApproved,
-              hasPlaybackId: !!videoData.muxPlaybackId,
-              willStopPolling: !!videoData.muxPlaybackId
+              isApproved: videoData.isApproved
             })
             
             // Update processing stages based on real status
             setProcessingStages(prev => ({
               ...prev,
               processing: videoData.muxPlaybackId ? true : false,
-              thumbnails: !!videoData.thumbnailUrl, // Convert to boolean properly
+              thumbnails: videoData.thumbnailUrl ? true : false,
               moderation: videoData.status === 'PUBLISHED' || videoData.isApproved
             }))
 
-            // Processing is complete if we have a playback ID (video is ready for streaming)
-            // Thumbnails are nice to have but not required to stop polling
-            if (videoData.muxPlaybackId) {
-              console.log('✅ Video processing complete (playback ID available), stopping poll')
-              
-              // Mark all stages as complete if we have playback ID
-              setProcessingStages(prev => ({
-                ...prev,
-                processing: true,
-                thumbnails: true, // Mark as complete even if no custom thumbnail
-                moderation: videoData.status === 'PUBLISHED' || videoData.isApproved
-              }))
-              
+            // If processing complete, we're done polling
+            if (videoData.muxPlaybackId && videoData.thumbnailUrl) {
+              console.log('✅ All processing complete, stopping poll')
               return true // Signal to stop polling
             }
           } else {
@@ -327,7 +315,7 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
       // Start polling immediately and then every 3 seconds
       let pollInterval: NodeJS.Timeout
       let pollCount = 0
-      const maxPolls = 200 // Stop after 10 minutes (200 * 3 seconds) - enough for most videos
+      const maxPolls = 60 // Stop after 3 minutes (60 * 3 seconds)
       
       const startPolling = async () => {
         console.log('🔄 Starting status polling for video:', draftVideoId)
@@ -1693,6 +1681,162 @@ export default function UploadWizard({ onClose, onMultipleUploads }: UploadWizar
             </div>
           </div>
         )}
+
+
+            {/* Processing Status */}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-purple-400 rounded-2xl blur-lg opacity-10"></div>
+              <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl p-6 border border-white/50">
+                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="w-4 h-4 bg-blue-500 rounded-full animate-pulse"></span>
+                  Video Processing
+                </h4>
+                <div className="space-y-4">
+                  {/* Upload Complete */}
+                  <div className="flex items-center gap-3">
+                    {processingStages.upload ? (
+                      <>
+                        <span className="text-green-600 text-sm">✅</span>
+                        <span className="text-sm text-gray-700">Video uploaded successfully</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm text-gray-700">Uploading video...</span>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Thumbnail Generation */}
+                  <div className="flex items-center gap-3">
+                    {processingStages.thumbnails ? (
+                      <>
+                        <span className="text-green-600 text-sm">✅</span>
+                        <span className="text-sm text-gray-700">Video thumbnails generated</span>
+                      </>
+                    ) : processingStages.upload ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm text-gray-700">Extracting video thumbnails...</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full"></div>
+                        <span className="text-sm text-gray-500">Waiting for video upload...</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Video Processing */}
+                  <div className="flex items-center gap-3">
+                    {processingStages.processing ? (
+                      <>
+                        <span className="text-green-600 text-sm">✅</span>
+                        <span className="text-sm text-gray-700">Video processing complete</span>
+                      </>
+                    ) : processingStages.thumbnails ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm text-gray-700">Processing video for streaming...</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full"></div>
+                        <span className="text-sm text-gray-500">Waiting for video processing...</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Content Moderation */}
+                  <div className="flex items-center gap-3">
+                    {processingStages.moderation ? (
+                      <>
+                        <span className="text-green-600 text-sm">✅</span>
+                        <span className="text-sm text-gray-700">AI content moderation complete</span>
+                      </>
+                    ) : processingStages.processing ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm text-gray-700">Running AI content checks...</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full"></div>
+                        <span className="text-sm text-gray-500">Waiting for video processing...</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>What's happening:</strong> We're processing your video to ensure optimal quality and checking it meets our community guidelines. This usually takes 1-2 minutes.
+                  </p>
+                </div>
+
+                {/* Manual override for stuck processing */}
+                {!processingStages.moderation && (
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={() => {
+                        console.log('🚀 Manual override: marking processing as complete')
+                        setProcessingStages(prev => ({
+                          ...prev,
+                          processing: true,
+                          moderation: true
+                        }))
+                      }}
+                      className="text-sm text-purple-600 hover:text-purple-700 underline"
+                    >
+                      Processing taking too long? Continue anyway →
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Community Guidelines Notice */}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl blur-lg opacity-10"></div>
+              <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl p-6 border border-white/50">
+                <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="text-amber-600">⚠️</span>
+                  Content Review
+                </h4>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <p>Your video is being automatically checked for:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li>Copyright violations</li>
+                    <li>Community guidelines compliance</li>
+                    <li>Age-appropriate content</li>
+                    <li>Technical quality</li>
+                  </ul>
+                  <p className="text-xs text-gray-600 mt-3">
+                    Videos that don't meet our standards may be removed or have limited visibility.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Processing Status Info */}
+            <div className="text-center">
+              {processingStages.moderation ? (
+                <div className="flex items-center justify-center gap-3 text-green-600">
+                  <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                  <span className="font-medium">Processing complete! Ready to continue.</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-3 text-gray-500">
+                  <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span>Processing... Please wait</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Step 3: Preview */}
         {!isInitialUpload && currentStep === 3 && (
           <div className="max-w-4xl mx-auto space-y-6">

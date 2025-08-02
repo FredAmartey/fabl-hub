@@ -35,9 +35,9 @@ export class APIClient {
     this.getAuthToken = config.getAuthToken
   }
 
-  private async request<T>(
+  async request<T>(
     path: string,
-    options: RequestInit = {}
+    options: RequestInit & { body?: any } = {}
   ): Promise<T> {
     const token = this.getAuthToken?.()
     const headers: Record<string, string> = {
@@ -48,10 +48,24 @@ export class APIClient {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
     }
+    
+    console.log('API Request:', {
+      url: `${this.baseURL}${path}`,
+      hasToken: !!token,
+      headers: headers
+    })
+
+    // Convert body to JSON string if it's an object
+    let body = options.body
+    if (body && typeof body === 'object' && !(body instanceof FormData)) {
+      body = JSON.stringify(body)
+    }
 
     const response = await fetch(`${this.baseURL}${path}`, {
       ...options,
+      body,
       headers,
+      credentials: 'include', // Include cookies for CORS
     })
 
     if (!response.ok) {
@@ -80,9 +94,22 @@ export class APIClient {
     if (params?.tags && params.tags.length > 0) searchParams.set('tags', params.tags.join(','))
     if (params?.creatorId) searchParams.set('creatorId', params.creatorId)
 
-    return this.request<ApiResponse<Video[]>>(
+    const response = await this.request<any>(
       `/api/videos?${searchParams.toString()}`
     )
+    
+    // Transform the response to match ApiResponse<Video[]> format
+    return {
+      success: true,
+      data: response.videos || [],
+      meta: {
+        page: response.pagination?.page || 1,
+        limit: response.pagination?.limit || 20,
+        total: response.pagination?.total || 0,
+        totalPages: response.pagination?.totalPages || 0,
+        hasMore: (response.pagination?.page || 1) < (response.pagination?.totalPages || 0)
+      }
+    }
   }
 
   async getVideo(id: string): Promise<ApiResponse<Video>> {

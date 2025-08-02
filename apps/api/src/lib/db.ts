@@ -39,6 +39,8 @@ const dbPlugin: FastifyPluginAsync = fp(async (fastify) => {
     instance.log.info('Disconnecting from database...')
     await db.$disconnect()
   })
+}, {
+  name: 'db'
 })
 
 export { dbPlugin }

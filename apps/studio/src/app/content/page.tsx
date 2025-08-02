@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -96,9 +96,10 @@ export default function ContentPage() {
   };
 
   // Get video data from API
-  const videos = videosData?.videos || [];
-  const totalPages = videosData?.pagination?.totalPages || 1;
-  const totalVideos = videosData?.pagination?.total || 0;
+  console.log('Query state:', { videosData, isLoading, error });
+  const videos = videosData?.data || [];
+  const totalPages = videosData?.meta?.totalPages || 1;
+  const totalVideos = videosData?.meta?.total || 0;
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -112,7 +113,8 @@ export default function ContentPage() {
 
   const handleVideoClick = (videoId: string) => {
     console.log('Video clicked:', videoId);
-    // TODO: Navigate to video edit page or show video details
+    // Open video edit modal/page
+    handleVideoAction(videoId, 'edit');
   };
 
   const handleUploadClick = () => {
@@ -189,24 +191,31 @@ export default function ContentPage() {
     }
   };
 
+  const formatDuration = (seconds: number) => {
+    if (!seconds || seconds === 0) return "0:00";
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
+  };
+
   const getStatusDisplay = (status: string) => {
     const normalizedStatus = status.toLowerCase();
     switch (normalizedStatus) {
       case "published":
       case "public":
-        return { label: "PUBLIC", color: "bg-green-500/20 text-green-300", icon: CheckCircleIcon };
+        return { label: "PUBLISHED", color: "bg-green-100 text-green-800", icon: CheckCircleIcon };
       case "unlisted":
-        return { label: "UNLISTED", color: "bg-orange-500/20 text-orange-300", icon: EyeIcon };
+        return { label: "UNLISTED", color: "bg-orange-100 text-orange-800", icon: EyeIcon };
       case "private":
-        return { label: "PRIVATE", color: "bg-gray-500/20 text-gray-300", icon: LockClosedIcon };
+        return { label: "PRIVATE", color: "bg-gray-100 text-gray-800", icon: LockClosedIcon };
       case "scheduled":
-        return { label: "SCHEDULED", color: "bg-blue-500/20 text-blue-300", icon: CalendarIcon };
+        return { label: "SCHEDULED", color: "bg-blue-100 text-blue-800", icon: CalendarIcon };
       case "draft":
-        return { label: "DRAFT", color: "bg-purple-500/20 text-purple-300", icon: ClockIcon };
+        return { label: "DRAFT", color: "bg-purple-100 text-purple-800", icon: ClockIcon };
       case "processing":
-        return { label: "PROCESSING", color: "bg-yellow-500/20 text-yellow-300", icon: ClockIcon };
+        return { label: "PROCESSING", color: "bg-yellow-100 text-yellow-800", icon: ClockIcon };
       default:
-        return { label: status.toUpperCase(), color: "bg-gray-500/20 text-gray-300", icon: XMarkIcon };
+        return { label: status.toUpperCase(), color: "bg-gray-100 text-gray-800", icon: XMarkIcon };
     }
   };
 
@@ -349,7 +358,7 @@ export default function ContentPage() {
 
         {/* Main Content */}
         {!isLoading && !error && (
-          <div className="backdrop-blur-xl rounded-2xl border border-white/40 shadow-2xl overflow-hidden" style={{backgroundColor: 'rgba(255, 255, 255, 0.2)', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)'}}>
+          <div className="backdrop-blur-xl rounded-2xl border border-white/40 shadow-2xl overflow-visible" style={{backgroundColor: 'rgba(255, 255, 255, 0.2)', boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)'}}>
             {viewMode === "list" ? (
             /* List View */
             <div>
@@ -390,7 +399,7 @@ export default function ContentPage() {
               </div>
 
               {/* Video Rows */}
-              <div className="divide-y divide-white/10">
+              <div className="divide-y divide-white/10 relative">
                 {videos.length === 0 ? (
                   <div className="px-6 py-12 text-center">
                     <FilmIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -412,11 +421,12 @@ export default function ContentPage() {
                   return (
                     <div 
                       key={video.id} 
-                      className={`px-6 py-4 transition-all duration-300 group ${
+                      className={`px-6 py-4 transition-all duration-300 group cursor-pointer ${
                         activeDropdown !== null
                           ? activeDropdown === video.id ? 'backdrop-blur-sm bg-white/10' : ''
                           : 'hover:backdrop-blur-sm hover:bg-white/10'
                       }`}
+                      onClick={() => handleVideoClick(video.id)}
                     >
                       <div className="grid grid-cols-12 gap-3 items-center">
                         {/* Checkbox */}
@@ -429,7 +439,10 @@ export default function ContentPage() {
                               className="sr-only"
                             />
                             <div 
-                              onClick={() => toggleVideoSelection(video.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleVideoSelection(video.id);
+                              }}
                               className={`w-5 h-5 rounded-md border-2 cursor-pointer transition-all flex items-center justify-center ${
                                 selectedVideos.includes(video.id)
                                   ? 'border-purple-500 bg-gradient-to-r from-purple-500 to-pink-500'
@@ -458,21 +471,18 @@ export default function ContentPage() {
                               <FilmIcon className="w-10 h-10 text-gray-600" />
                             )}
                             <div className="absolute bottom-1 right-1 bg-black/90 text-white text-xs px-1.5 py-0.5 rounded font-medium">
-                              {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
+                              {formatDuration(video.duration)}
                             </div>
                           </div>
                           <div className="flex-1">
-                            <h3 
-                              className="font-medium text-gray-900 hover:text-purple-600 transition-colors cursor-pointer"
-                              onClick={() => handleVideoClick(video.id)}
-                            >
+                            <h3 className="font-medium text-gray-900 hover:text-purple-600 transition-colors">
                               {video.title}
                             </h3>
                             <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                              <span>PUBLIC</span>
+                              <span>{statusDisplay.label}</span>
                               <span>•</span>
                               <span>HD</span>
-                              {video.monetization && (
+                              {video.monetizationEnabled && (
                                 <>
                                   <span>•</span>
                                   <span className="text-green-600 font-medium flex items-center gap-1">
@@ -484,13 +494,16 @@ export default function ContentPage() {
                             </div>
                             
                             {/* YouTube-style action buttons underneath video text */}
-                            <div className={`transition-opacity duration-200 flex items-center gap-1 ${
-                              activeDropdown === video.id 
-                                ? 'opacity-100' 
-                                : activeDropdown !== null 
-                                  ? 'opacity-0' 
-                                  : 'opacity-0 group-hover:opacity-100'
-                            }`}>
+                            <div 
+                              onClick={(e) => e.stopPropagation()}
+                              className={`transition-opacity duration-200 flex items-center gap-1 ${
+                                activeDropdown === video.id 
+                                  ? 'opacity-100' 
+                                  : activeDropdown !== null 
+                                    ? 'opacity-0' 
+                                    : 'opacity-0 group-hover:opacity-100'
+                              }`}
+                            >
                               {/* Analytics */}
                               <button
                                 onClick={(e) => {
@@ -540,12 +553,12 @@ export default function ContentPage() {
                                 {/* Dropdown Menu */}
                                 {activeDropdown === video.id && (
                                   <div 
-                                    className={`absolute left-0 w-56 bg-white border border-gray-200 rounded-lg shadow-lg py-1 ${
+                                    className={`absolute left-0 w-56 bg-white border border-gray-200 rounded-lg shadow-xl py-1 ${
                                       dropdownPosition[video.id] === 'up' 
                                         ? 'bottom-full mb-2' 
                                         : 'top-full mt-2'
                                     }`}
-                                    style={{ zIndex: 1000 }}
+                                    style={{ zIndex: 9999 }}
                                     onMouseEnter={() => {
                                       // Keep the dropdown open and action buttons visible when hovering over dropdown
                                       setActiveDropdown(video.id);
@@ -601,16 +614,9 @@ export default function ContentPage() {
 
                         {/* Status */}
                         <div className="col-span-1">
-                          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            video.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' :
-                            video.status === 'DRAFT' ? 'bg-purple-100 text-purple-800' :
-                            video.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
+                          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusDisplay.color}`}>
                             <StatusIcon className="w-3 h-3" />
-                            {video.status === 'PUBLISHED' ? 'Published' :
-                             video.status === 'DRAFT' ? 'Draft' :
-                             video.status === 'PROCESSING' ? 'Processing' : video.status}
+                            {statusDisplay.label}
                           </div>
                         </div>
 
@@ -742,7 +748,10 @@ export default function ContentPage() {
                   const statusDisplay = getStatusDisplay(video.status);
                   return (
                     <div key={video.id} className="group relative">
-                      <div className="bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-white/50">
+                      <div 
+                        onClick={() => handleVideoClick(video.id)}
+                        className="bg-white/80 backdrop-blur-sm rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-white/50 cursor-pointer"
+                      >
                         {/* Video Thumbnail */}
                         <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                           {video.thumbnailUrl ? (
@@ -759,27 +768,36 @@ export default function ContentPage() {
                           
                           {/* Duration */}
                           <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded font-medium">
-                            {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
+                            {formatDuration(video.duration)}
                           </div>
                           
                           {/* Hover Overlay with Actions */}
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
                             <button
-                              onClick={() => handleVideoAction(video.id, 'analytics')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleVideoAction(video.id, 'analytics');
+                              }}
                               className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all text-white"
                               title="Analytics"
                             >
                               <ChartBarIcon className="w-5 h-5" />
                             </button>
                             <button
-                              onClick={() => handleVideoAction(video.id, 'edit')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleVideoAction(video.id, 'edit');
+                              }}
                               className="p-3 bg-white hover:bg-gray-100 rounded-full transition-all text-gray-900"
                               title="Edit"
                             >
                               <PencilIcon className="w-5 h-5" />
                             </button>
                             <button
-                              onClick={() => handleVideoAction(video.id, 'view-hub')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleVideoAction(video.id, 'view-hub');
+                              }}
                               className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all text-white"
                               title="View on Hub"
                             >
@@ -793,15 +811,17 @@ export default function ContentPage() {
                           {/* Title and Menu */}
                           <div className="flex items-start gap-2 mb-3">
                             <h3 
-                              className="flex-1 font-medium text-gray-900 line-clamp-2 cursor-pointer hover:text-purple-600 transition-colors text-sm"
-                              onClick={() => handleVideoClick(video.id)}
+                              className="flex-1 font-medium text-gray-900 line-clamp-2 text-sm"
                               title={video.title}
                             >
                               {video.title}
                             </h3>
                             <div className="dropdown-container relative">
                               <button
-                                onClick={(e) => handleDropdownToggle(video.id, e)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDropdownToggle(video.id, e);
+                                }}
                                 className="p-1 hover:bg-gray-100 rounded transition-colors text-gray-600 opacity-0 group-hover:opacity-100"
                               >
                                 <EllipsisVerticalIcon className="w-4 h-4" />
@@ -810,12 +830,12 @@ export default function ContentPage() {
                               {/* Dropdown Menu */}
                               {activeDropdown === video.id && (
                                 <div 
-                                  className={`absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 ${
+                                  className={`absolute right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-1 ${
                                     dropdownPosition[video.id] === 'up' 
                                       ? 'bottom-full mb-2' 
                                       : 'top-full mt-2'
                                   }`}
-                                  style={{ zIndex: 1000 }}
+                                  style={{ zIndex: 9999 }}
                                 >
                                   <button
                                     onClick={(e) => {
@@ -856,7 +876,7 @@ export default function ContentPage() {
                           {/* Status */}
                           <div className="flex items-center gap-3 mb-3 text-xs text-gray-500">
                             <div className="flex items-center gap-1">
-                              <statusDisplay.icon className="w-3 h-3" />
+                              {React.createElement(statusDisplay.icon, { className: "w-3 h-3" })}
                               <span>{video.status.charAt(0).toUpperCase() + video.status.slice(1).toLowerCase()}</span>
                             </div>
                           </div>

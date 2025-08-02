@@ -97,8 +97,8 @@ export const logSecurityEvent = (event: string, ip: string, data = {}) => {
 
 // Fastify plugin for enhanced logging
 const enhancedLoggingPlugin: FastifyPluginAsync = fp(async (fastify) => {
-  // Replace default logger
-  fastify.decorate('log', logger)
+  // Don't replace the default logger, just add our custom logger
+  fastify.decorate('customLogger', logger)
 
   // Add request/response logging
   fastify.addHook('onRequest', async (request) => {

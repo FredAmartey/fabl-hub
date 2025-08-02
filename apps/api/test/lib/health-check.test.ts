@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+// Test file for health check functions
 
 // Since the functions are not exported, we'll recreate them for testing
 // In a real implementation, these should be extracted to a separate module
+
+// Using Jest globals (describe, it, expect are available globally)
 
 interface SystemHealth {
   status: 'ok' | 'degraded'
@@ -75,7 +77,7 @@ describe('Health Check Functions', () => {
   describe('checkDatabaseHealth', () => {
     it('should return connected when database query succeeds', async () => {
       const mockDb = {
-        $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }])
+        $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }])
       }
 
       const result = await checkDatabaseHealth(mockDb)
@@ -86,7 +88,7 @@ describe('Health Check Functions', () => {
 
     it('should return disconnected when database query fails', async () => {
       const mockDb = {
-        $queryRaw: vi.fn().mockRejectedValue(new Error('Connection failed'))
+        $queryRaw: jest.fn().mockRejectedValue(new Error('Connection failed'))
       }
 
       const result = await checkDatabaseHealth(mockDb)
@@ -112,8 +114,8 @@ describe('Health Check Functions', () => {
 
     it('should return cache health with stats when connected', async () => {
       const mockCache = {
-        health: vi.fn().mockResolvedValue({ status: 'connected', latency: 5 }),
-        getStats: vi.fn().mockReturnValue({ hits: 100, misses: 20, hitRate: '83.33%' })
+        health: jest.fn().mockResolvedValue({ status: 'connected', latency: 5 }),
+        getStats: jest.fn().mockReturnValue({ hits: 100, misses: 20, hitRate: '83.33%' })
       }
 
       const result = await checkCacheHealth(mockCache)
@@ -127,8 +129,8 @@ describe('Health Check Functions', () => {
 
     it('should return cache health without stats when not connected', async () => {
       const mockCache = {
-        health: vi.fn().mockResolvedValue({ status: 'disconnected' }),
-        getStats: vi.fn()
+        health: jest.fn().mockResolvedValue({ status: 'disconnected' }),
+        getStats: jest.fn()
       }
 
       const result = await checkCacheHealth(mockCache)
@@ -139,7 +141,7 @@ describe('Health Check Functions', () => {
 
     it('should handle cache health check errors', async () => {
       const mockCache = {
-        health: vi.fn().mockRejectedValue(new Error('Redis timeout'))
+        health: jest.fn().mockRejectedValue(new Error('Redis timeout'))
       }
 
       const result = await checkCacheHealth(mockCache)
@@ -152,7 +154,7 @@ describe('Health Check Functions', () => {
 
     it('should handle non-Error exceptions', async () => {
       const mockCache = {
-        health: vi.fn().mockRejectedValue('Network failure')
+        health: jest.fn().mockRejectedValue('Network failure')
       }
 
       const result = await checkCacheHealth(mockCache)
@@ -167,7 +169,7 @@ describe('Health Check Functions', () => {
   describe('checkSystemHealth', () => {
     beforeEach(() => {
       // Mock process.uptime for consistent testing
-      vi.spyOn(process, 'uptime').mockReturnValue(3600) // 1 hour
+      jest.spyOn(process, 'uptime').mockReturnValue(3600) // 1 hour
       process.env.NODE_ENV = 'test'
       process.env.npm_package_version = '1.0.0'
     })
@@ -175,11 +177,11 @@ describe('Health Check Functions', () => {
     it('should return ok status when all systems are healthy', async () => {
       const mockServer = {
         db: {
-          $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }])
+          $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }])
         },
         cache: {
-          health: vi.fn().mockResolvedValue({ status: 'connected', latency: 3 }),
-          getStats: vi.fn().mockReturnValue({ hits: 50, misses: 10 })
+          health: jest.fn().mockResolvedValue({ status: 'connected', latency: 3 }),
+          getStats: jest.fn().mockReturnValue({ hits: 50, misses: 10 })
         }
       }
 
@@ -198,11 +200,11 @@ describe('Health Check Functions', () => {
     it('should return degraded status when database is disconnected', async () => {
       const mockServer = {
         db: {
-          $queryRaw: vi.fn().mockRejectedValue(new Error('DB down'))
+          $queryRaw: jest.fn().mockRejectedValue(new Error('DB down'))
         },
         cache: {
-          health: vi.fn().mockResolvedValue({ status: 'connected' }),
-          getStats: vi.fn().mockReturnValue({})
+          health: jest.fn().mockResolvedValue({ status: 'connected' }),
+          getStats: jest.fn().mockReturnValue({})
         }
       }
 
@@ -216,10 +218,10 @@ describe('Health Check Functions', () => {
     it('should return degraded status when cache has error', async () => {
       const mockServer = {
         db: {
-          $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }])
+          $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }])
         },
         cache: {
-          health: vi.fn().mockRejectedValue(new Error('Cache timeout'))
+          health: jest.fn().mockRejectedValue(new Error('Cache timeout'))
         }
       }
 
@@ -234,7 +236,7 @@ describe('Health Check Functions', () => {
     it('should handle missing cache gracefully', async () => {
       const mockServer = {
         db: {
-          $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }])
+          $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }])
         },
         cache: null
       }
@@ -250,7 +252,7 @@ describe('Health Check Functions', () => {
       delete process.env.npm_package_version
 
       const mockServer = {
-        db: { $queryRaw: vi.fn().mockResolvedValue([]) },
+        db: { $queryRaw: jest.fn().mockResolvedValue([]) },
         cache: null
       }
 

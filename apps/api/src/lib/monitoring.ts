@@ -49,7 +49,13 @@ class MetricsCollector {
   }
 
   recordVideoEvent(event: 'upload' | 'view' | 'processing') {
-    this.metrics.videos[event === 'processing' ? 'processing' : event + 's']++
+    if (event === 'upload') {
+      this.metrics.videos.uploads++
+    } else if (event === 'view') {
+      this.metrics.videos.views++
+    } else if (event === 'processing') {
+      this.metrics.videos.processing++
+    }
   }
 
   recordCacheEvent(hit: boolean) {
@@ -179,7 +185,7 @@ async function checkSystemHealth(server: any) {
     environment: process.env.NODE_ENV,
     version: process.env.npm_package_version || '1.0.0',
     database: 'unknown',
-    cache: { status: 'unknown' }
+    cache: { status: 'unknown' } as any
   }
 
   // Check database

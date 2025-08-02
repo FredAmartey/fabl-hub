@@ -51,7 +51,10 @@
       "Bash(PORT=3000 npm run dev)",
       "Bash(npm test:*)",
       "Bash(timeout 30s npm run dev)",
-      "Bash(PORT=3003 timeout 15s npm run dev)"
+      "Bash(PORT=3003 timeout 15s npm run dev)",
+      "Bash(touch:*)",
+      "Bash(node:*)",
+      "Bash(open http://localhost:5555)"
     ],
     "deny": []
   }

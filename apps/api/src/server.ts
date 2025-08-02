@@ -22,6 +22,9 @@ import uploadRoutes from './routes/upload'
 import searchRoutes from './routes/search'
 import dashboardRoutes from './routes/dashboard'
 import studioRoutes from './routes/studio'
+import moderationRoutes from './routes/moderation'
+import notificationRoutes from './routes/notifications'
+import adminRoutes from './routes/admin'
 
 const server = fastify({
   logger: {
@@ -126,6 +129,76 @@ async function checkSystemHealth(server: any): Promise<SystemHealth> {
   return health
 }
 
+// Automatic Mux status sync for development
+async function startMuxStatusSync(server: any) {
+  const syncInterval = 2 * 60 * 1000 // 2 minutes
+  
+  const syncMuxStatus = async () => {
+    try {
+      // Import Mux here to avoid circular dependencies
+      const Mux = (await import('@mux/mux-node')).default
+      const mux = new Mux({
+        tokenId: process.env.MUX_TOKEN_ID!,
+        tokenSecret: process.env.MUX_TOKEN_SECRET!,
+      })
+
+      // Get all processing videos
+      const processingVideos = await server.db.video.findMany({
+        where: { status: 'PROCESSING' }
+      })
+
+      if (processingVideos.length === 0) {
+        return // No videos to sync
+      }
+
+      let updatedCount = 0
+      
+      for (const video of processingVideos) {
+        try {
+          const asset = await mux.video.assets.retrieve(video.muxAssetId)
+          
+          if (asset.status === 'ready') {
+            const playbackId = asset.playback_ids?.[0]?.id
+            
+            await server.db.video.update({
+              where: { id: video.id },
+              data: {
+                status: 'PUBLISHED',
+                muxPlaybackId: playbackId,
+                duration: Math.round(asset.duration || 0),
+                publishedAt: video.publishedAt || new Date(),
+                isApproved: true
+              }
+            })
+            
+            updatedCount++
+            server.log.info({ videoId: video.id, assetId: video.muxAssetId }, 'Auto-synced video status from Mux')
+          }
+        } catch (error) {
+          server.log.warn({ videoId: video.id, assetId: video.muxAssetId, error }, 'Failed to auto-sync video status')
+        }
+      }
+
+      if (updatedCount > 0) {
+        server.log.info(`🔄 Auto-synced ${updatedCount} videos from processing to published`)
+      }
+    } catch (error) {
+      server.log.warn({ error }, 'Failed to run automatic Mux status sync')
+    }
+  }
+
+  // Run initial sync after 30 seconds
+  setTimeout(syncMuxStatus, 30000)
+  
+  // Then run every 2 minutes
+  const intervalId = setInterval(syncMuxStatus, syncInterval)
+  
+  server.log.info('🔄 Started automatic Mux status sync (every 2 minutes)')
+  
+  // Store interval ID for cleanup later
+  ;(server as any).muxSyncInterval = intervalId
+}
+
 async function start() {
   try {
     // Register environment validation
@@ -192,11 +265,15 @@ async function start() {
     await server.register(cachePlugin)
     await server.register(queuePlugin)
     await server.register(authPlugin)
+    
+    // Register AI moderation plugin
+    const aiModerationPlugin = await import('./plugins/ai-moderation')
+    await server.register(aiModerationPlugin.default)
 
     // Enhanced logging with monitoring
-    const { enhancedLoggingPlugin } = await import('./lib/logger')
+    // const { enhancedLoggingPlugin } = await import('./lib/logger')
     const { monitoringPlugin } = await import('./lib/monitoring')
-    await server.register(enhancedLoggingPlugin)
+    // await server.register(enhancedLoggingPlugin) // Disabled due to logger conflict
     await server.register(monitoringPlugin)
 
     // Register error handler
@@ -259,6 +336,9 @@ async function start() {
     await server.register(searchRoutes, { prefix: '/api/search' })
     await server.register(dashboardRoutes, { prefix: '/api/dashboard' })
     await server.register(studioRoutes, { prefix: '/api/studio' })
+    await server.register(notificationRoutes, { prefix: '/api/notifications' })
+    await server.register(adminRoutes, { prefix: '/api/admin' })
+    await server.register(moderationRoutes)
 
     // Start server
     const port = parseInt(process.env.PORT || '3002', 10)
@@ -270,6 +350,11 @@ async function start() {
     if (process.env.ENABLE_WORKERS !== 'false') {
       await startWorkers(server as any)
       server.log.info('🔧 Background workers started')
+    }
+    
+    // Start automatic Mux status sync in development
+    if (process.env.NODE_ENV === 'development') {
+      startMuxStatusSync(server as any)
     }
     
     server.log.info(`🚀 Fabl API server listening on http://${host}:${port}`)
@@ -284,12 +369,20 @@ async function start() {
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
   server.log.info('Received SIGINT, shutting down gracefully...')
+  if ((server as any).muxSyncInterval) {
+    clearInterval((server as any).muxSyncInterval)
+    server.log.info('🔄 Stopped automatic Mux status sync')
+  }
   await server.close()
   process.exit(0)
 })
 
 process.on('SIGTERM', async () => {
   server.log.info('Received SIGTERM, shutting down gracefully...')
+  if ((server as any).muxSyncInterval) {
+    clearInterval((server as any).muxSyncInterval)
+    server.log.info('🔄 Stopped automatic Mux status sync')
+  }
   await server.close()
   process.exit(0)
 })

@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import StudioLayout from "@/components/StudioLayout";
 import { Providers } from "@/components/providers";
+import { UploadWizardModal } from "@/components/UploadWizardModal";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,6 +37,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           <Providers>
             <StudioLayout>{children}</StudioLayout>
+            
+            {/* Upload Wizard Modal - OUTSIDE StudioLayout to avoid stacking context issues */}
+            <UploadWizardModal />
           </Providers>
         </body>
       </html>

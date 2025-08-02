@@ -32,9 +32,7 @@ import {
 import ChannelSettingsSimple from "./ChannelSettingsSimple";
 import CustomDropdown from "./CustomDropdown";
 import ToggleSwitch from "./ToggleSwitch";
-import UploadWizard from "./UploadWizard";
-import UploadProgressTracker from "./UploadProgressTracker";
-import { UploadProvider } from "../contexts/UploadContext";
+import { useUpload } from "@/contexts/UploadContext";
 
 const navigationItems = [
   { name: "Dashboard", href: "/", icon: HomeIcon },
@@ -48,25 +46,14 @@ const navigationItems = [
   { name: "Audio Library", href: "/audio-library", icon: MusicalNoteIcon },
 ];
 
-interface UploadFile {
-  id: string
-  name: string
-  size: number
-  type: string
-  progress: number
-  status: 'uploading' | 'processing' | 'completed' | 'error'
-  thumbnail?: string
-}
-
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
+  console.log('🏗️ StudioLayout rendering...')
   const pathname = usePathname();
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
-  const [showUploadModal, setShowUploadModal] = useState(false);
+  const { openUploadModal } = useUpload();
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [uploadQueue, setUploadQueue] = useState<UploadFile[]>([]);
-  const [showProgressTracker, setShowProgressTracker] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -79,7 +66,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
   // Lock body scroll when modal is open
   React.useEffect(() => {
-    if (showUploadModal || showSettingsModal) {
+    if (showSettingsModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -88,7 +75,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [showUploadModal, showSettingsModal]);
+  }, [showSettingsModal]);
 
   // Close user menu when clicking outside
   React.useEffect(() => {
@@ -119,11 +106,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
 
   // Don't show the layout for sign-in/sign-up pages or when not authenticated
   if (!isSignedIn || pathname === '/sign-in' || pathname === '/sign-up') {
-    return (
-      <UploadProvider openUploadModal={() => {}}>
-        {children}
-      </UploadProvider>
-    );
+    return children;
   }
 
   const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,50 +121,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
     }
   };
 
-  const handleMultipleUploads = (files: UploadFile[]) => {
-    console.log('handleMultipleUploads called with', files.length, 'files');
-    setUploadQueue(files);
-    setShowProgressTracker(true);
-    
-    // Simulate upload progress for each file
-    files.forEach((file) => {
-      simulateUploadProgress(file.id);
-    });
-  };
 
-  const simulateUploadProgress = (fileId: string) => {
-    let currentProgress = 0;
-    
-    const interval = setInterval(() => {
-      currentProgress += Math.random() * 15 + 10; // Increment by 10-25% each time
-      
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        clearInterval(interval);
-      }
-      
-      setUploadQueue(prev => prev.map(file => {
-        if (file.id === fileId) {
-          return { 
-            ...file, 
-            progress: currentProgress, 
-            status: currentProgress >= 100 ? 'completed' : 'uploading'
-          };
-        }
-        return file;
-      }));
-    }, 300);
-  };
-
-  const handleEditVideo = (fileId: string) => {
-    // Navigate to individual video editor
-    // This would open a single-video wizard for the specific file
-    console.log('Edit video:', fileId);
-  };
-
-  const handleRemoveFile = (fileId: string) => {
-    setUploadQueue(prev => prev.filter(file => file.id !== fileId));
-  };
 
 
   return (
@@ -277,7 +217,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
         {/* Upload and Notification */}
         <div className="px-4 pb-4 flex gap-3">
           <button 
-            onClick={() => setShowUploadModal(true)}
+            onClick={openUploadModal}
             className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg"
           >
             <CloudArrowUpIcon className="w-5 h-5" />
@@ -318,9 +258,7 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
       <div className="flex-1 flex flex-col">
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-[#0a0a0f] relative">
-          <UploadProvider openUploadModal={() => setShowUploadModal(true)}>
-            {children}
-          </UploadProvider>
+          {children}
         </main>
         
         {/* Floating User Menu */}
@@ -433,33 +371,6 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
         </div>
       </div>
 
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowUploadModal(false)}
-          />
-          
-          {/* Modal Content */}
-          <div className="relative w-full max-w-4xl h-[85vh] bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            {/* Animated Background */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <div className="absolute top-1/2 -left-24 w-48 h-48 bg-gradient-to-r from-indigo-300 to-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
-              <div className="absolute bottom-1/3 -right-24 w-48 h-48 bg-gradient-to-r from-pink-300 to-rose-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float-delayed"></div>
-            </div>
-
-            {/* Upload Wizard */}
-            <div className="relative z-10 flex-1 flex flex-col min-h-0">
-              <UploadWizard 
-                onClose={() => setShowUploadModal(false)}
-                onMultipleUploads={handleMultipleUploads}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Settings Modal */}
       {showSettingsModal && (
@@ -501,14 +412,6 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
         </div>
       )}
 
-      {/* Upload Progress Tracker */}
-      <UploadProgressTracker
-        files={uploadQueue}
-        onClose={() => setShowProgressTracker(false)}
-        onEditVideo={handleEditVideo}
-        onRemoveFile={handleRemoveFile}
-        isVisible={showProgressTracker}
-      />
     </div>
   );
 }
@@ -821,6 +724,8 @@ function SettingsModalContent({ onClose }: { onClose: () => void }) {
           animation-delay: 2s;
         }
       `}</style>
+      
     </div>
   );
 }
+

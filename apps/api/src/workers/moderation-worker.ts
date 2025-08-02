@@ -1,24 +1,14 @@
 import { Worker, Job } from 'bullmq'
 import { FastifyInstance } from 'fastify'
-import axios from 'axios'
 import { ModerationJob, JobStatus } from './types'
 import { QUEUES } from '../lib/queue'
+import { AIModerationService } from '../services/ai-moderation'
 
-interface AIDetectionResult {
-  frameNumber: number
-  isAIGenerated: boolean
-  confidence: number
-}
-
-interface ModerationResult {
-  isApproved: boolean
-  aiRatio: number
-  nsfwDetected: boolean
-  violenceDetected: boolean
-  reason?: string
-}
 
 export async function moderationWorker(fastify: FastifyInstance): Promise<Worker> {
+  // Initialize moderation service
+  const moderationService = new AIModerationService(fastify)
+  
   const worker = new Worker<ModerationJob>(
     QUEUES.MODERATION,
     async (job: Job<ModerationJob>) => {
@@ -37,26 +27,12 @@ export async function moderationWorker(fastify: FastifyInstance): Promise<Worker
           )
         }
         
-        // Step 2: AI Detection - Check if content is AI-generated
-        const aiDetectionResults = await detectAIContent(frameUrls)
-        const aiFrameCount = aiDetectionResults.filter(r => r.isAIGenerated).length
-        const aiRatio = aiFrameCount / frameCount
-        
-        // Step 3: Content Moderation - Check for inappropriate content
-        const contentModerationResult = await moderateContent(frameUrls)
-        
-        // Step 4: Determine approval status
-        const isApproved = aiRatio >= 0.3 && !contentModerationResult.inappropriate
+        // Step 2: Run moderation pipeline
+        const moderationResult = await moderationService.moderateVideo(frameUrls, duration)
+        const { isApproved, aiRatio, reason } = moderationResult
         const moderationStatus = isApproved ? 'APPROVED' : 'REJECTED'
         
-        let rejectionReason = ''
-        if (aiRatio < 0.3) {
-          rejectionReason = `Video must contain at least 30% AI-generated content (detected: ${Math.round(aiRatio * 100)}%)`
-        } else if (contentModerationResult.inappropriate) {
-          rejectionReason = contentModerationResult.reason || 'Content violates community guidelines'
-        }
-        
-        // Step 5: Update video status
+        // Step 3: Update video status
         await fastify.db.video.update({
           where: { id: videoId },
           data: {
@@ -67,21 +43,21 @@ export async function moderationWorker(fastify: FastifyInstance): Promise<Worker
           },
         })
         
-        // Step 6: Create moderation log
+        // Step 4: Create moderation log with detailed results
         await fastify.db.moderationLog.create({
           data: {
             videoId,
             status: moderationStatus,
-            reason: rejectionReason || null,
+            reason: reason || null,
             aiScore: aiRatio,
           },
         })
         
-        // Step 7: Send notification
+        // Step 5: Send notification
         const notificationType = isApproved ? 'video_ready' : 'video_failed'
         const notificationMessage = isApproved
           ? 'Your video has been approved and is now live!'
-          : rejectionReason
+          : reason || 'Video did not meet approval criteria'
         
         await fastify.queues.notifications.add('send-notification', {
           type: notificationType,
@@ -103,7 +79,7 @@ export async function moderationWorker(fastify: FastifyInstance): Promise<Worker
             isApproved,
             aiRatio,
             moderationStatus,
-            reason: rejectionReason,
+            reason: reason || undefined,
           },
         }
       } catch (error) {
@@ -139,97 +115,3 @@ export async function moderationWorker(fastify: FastifyInstance): Promise<Worker
   return worker
 }
 
-// AI Detection Service Integration
-async function detectAIContent(frameUrls: string[]): Promise<AIDetectionResult[]> {
-  // This is a placeholder for the actual AI detection service
-  // In production, this would call services like:
-  // - Sensity API
-  // - Amber Video
-  // - Custom Vision Transformer model
-  
-  if (process.env.AI_DETECTION_API_KEY && process.env.AI_DETECTION_API_URL) {
-    try {
-      const results = await Promise.all(
-        frameUrls.map(async (url, index) => {
-          const response = await axios.post(
-            process.env.AI_DETECTION_API_URL!,
-            { imageUrl: url },
-            {
-              headers: {
-                'Authorization': `Bearer ${process.env.AI_DETECTION_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              timeout: 5000,
-            }
-          )
-          
-          return {
-            frameNumber: index,
-            isAIGenerated: response.data.isAIGenerated || false,
-            confidence: response.data.confidence || 0,
-          }
-        })
-      )
-      return results
-    } catch (error) {
-      console.error('AI detection API error:', error)
-      // Fallback to mock detection
-    }
-  }
-  
-  // Mock AI detection for development
-  return frameUrls.map((_, index) => ({
-    frameNumber: index,
-    isAIGenerated: Math.random() > 0.5, // 50% chance for dev
-    confidence: 0.7 + Math.random() * 0.3,
-  }))
-}
-
-// Content Moderation Service Integration
-async function moderateContent(frameUrls: string[]): Promise<{ inappropriate: boolean; reason?: string }> {
-  // This would integrate with Hive AI or Sightengine
-  if (process.env.HIVE_API_KEY && process.env.HIVE_API_URL) {
-    try {
-      // Sample only every 10th frame to reduce API calls
-      const sampled = frameUrls.filter((_, i) => i % 10 === 0)
-      
-      const results = await Promise.all(
-        sampled.map(async (url) => {
-          const response = await axios.post(
-            process.env.HIVE_API_URL!,
-            { url },
-            {
-              headers: {
-                'Authorization': `Token ${process.env.HIVE_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
-              timeout: 5000,
-            }
-          )
-          
-          const classes = response.data.status[0].response.output[0].classes
-          
-          // Check for inappropriate content
-          const nsfw = classes.find((c: any) => c.class === 'nsfw')
-          const violence = classes.find((c: any) => c.class === 'violence')
-          
-          return {
-            inappropriate: (nsfw?.score > 0.8) || (violence?.score > 0.8),
-            reason: nsfw?.score > 0.8 ? 'NSFW content detected' : 
-                   violence?.score > 0.8 ? 'Violence detected' : undefined,
-          }
-        })
-      )
-      
-      // If any frame is inappropriate, reject the video
-      const inappropriate = results.find(r => r.inappropriate)
-      return inappropriate || { inappropriate: false }
-    } catch (error) {
-      console.error('Content moderation API error:', error)
-      // Fallback to no moderation in case of error
-    }
-  }
-  
-  // For development, approve all content
-  return { inappropriate: false }
-}

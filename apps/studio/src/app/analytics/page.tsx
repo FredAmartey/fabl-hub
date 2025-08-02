@@ -164,7 +164,9 @@ export default function AnalyticsPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="relative">
-                  <ChartBarIcon className="w-8 h-8 text-purple-600" />
+                  <div className="w-8 h-8 bg-purple-600 rounded flex items-center justify-center">
+                    <span className="text-white text-sm">📊</span>
+                  </div>
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
               </div>

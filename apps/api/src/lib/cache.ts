@@ -358,13 +358,24 @@ const cachePlugin: FastifyPluginAsync = fp(async (fastify) => {
   const redisUrl = process.env.REDIS_URL
   const cache = new CacheService(redisUrl)
   
-  await cache.connect()
+  try {
+    await cache.connect()
+    fastify.log.info('✅ Redis cache connected successfully')
+  } catch (error) {
+    fastify.log.warn('⚠️  Redis cache connection failed, running without cache:', error)
+  }
   
   fastify.decorate('cache', cache)
   
   fastify.addHook('onClose', async () => {
-    await cache.disconnect()
+    try {
+      await cache.disconnect()
+    } catch (error) {
+      fastify.log.warn('Cache disconnect error:', error)
+    }
   })
+}, {
+  name: 'cache'
 })
 
 export { cachePlugin, CacheService }

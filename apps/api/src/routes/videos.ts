@@ -27,8 +27,9 @@ function parseVideoListRequest(request: any): ParsedVideoListRequest {
   const skip = (page - 1) * limit
 
   const where: any = {
-    status: 'PUBLISHED',
-    isApproved: true
+    status: 'PUBLISHED'
+    // Note: Removed isApproved filter to show all published videos
+    // Moderation happens asynchronously, so manually published videos should be visible
   }
 
   if (query.creatorId) {
@@ -359,7 +360,10 @@ const videoRoutes: FastifyPluginAsync = async (fastify) => {
       where: { id },
       data: {
         ...(request.body as Record<string, any>),
-        ...((request.body as any).status === 'PUBLISHED' && { publishedAt: new Date() })
+        ...((request.body as any).status === 'PUBLISHED' && { 
+          publishedAt: new Date(),
+          isApproved: true // Auto-approve manually published videos
+        })
       }
     })
 
